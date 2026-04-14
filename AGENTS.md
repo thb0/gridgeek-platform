@@ -9,8 +9,10 @@ GridGeek Platform is a lean, self-hosted web app scaffold designed for Docker-fi
 - PostgreSQL via Docker Compose
 - Environment-variable configuration
 - Portable/self-hosting-friendly defaults
+- Plain SQL schema files applied with lightweight `pg` tooling
 
 ## Maintenance rules
 - Keep this file up to date when architecture, stack, or repo workflows change.
 - Keep scaffolding intentionally minimal; avoid enterprise complexity unless explicitly requested.
 - Prefer dependable, broadly adopted tooling.
+- Keep operational scripts simple (`update.sh` for pull + rebuild + status).

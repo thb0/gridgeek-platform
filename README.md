@@ -1,32 +1,43 @@
-# GridGeek Platform (Scaffold)
+# GridGeek Platform
 
-GridGeek Platform is a **lean, self-hosted web app foundation** intended to run on home servers (like Unraid) and company-managed infrastructure.
+GridGeek Platform is a lean, self-hosted-first scaffold for running customer/supplier/site and tender workflows on Docker-friendly infrastructure (including Unraid).
 
-This repository is intentionally a first scaffold only.
+## Current project status
 
-## Current scope
+This is the **next lean milestone** of the scaffold. It now includes:
 
-- Next.js + TypeScript app shell (App Router)
-- Bootstrap-based minimal frontend
-- Basic routes: home, login, dashboard
-- API health endpoint
-- PostgreSQL wiring with a small DB utility
-- Dockerfile + Docker Compose for app + database
-- Environment-variable based configuration
+- Next.js app shell with shared navigation and placeholder module pages
+- PostgreSQL-backed foundation with starter schema SQL
+- Lightweight DB tooling using `pg` + plain SQL files
+- Docker Compose setup for app + persistent Postgres
+- Unraid-friendly update script (`update.sh`)
+
+## What is working now
+
+- App routes and shared header/nav
+- Health endpoint: `/api/health` with DB check + DB server time probe
+- PostgreSQL connection utility
+- Starter schema apply command (`npm run db:apply`)
+- Docker build/run flow
+- Persistent Postgres volume (`postgres_data`)
 
 ## Stack
 
-- [Next.js](https://nextjs.org/) (App Router, TypeScript)
-- [Bootstrap](https://getbootstrap.com/) for simple, familiar baseline UI styling
-- [PostgreSQL](https://www.postgresql.org/)
-- [pg](https://node-postgres.com/) for direct DB connectivity (simple and portable)
+- Next.js (App Router, TypeScript)
+- Bootstrap (minimal baseline UI)
+- PostgreSQL 16
+- `pg` (node-postgres)
 - Docker / Docker Compose
 
-### Why `pg` for now?
+### Why this DB tooling?
 
-For the scaffold phase, `pg` keeps the dependency footprint small and avoids locking us into early schema tooling decisions. It gives a straightforward path to add migrations/ORM later.
+For this phase, **`pg` + versioned SQL files** is a practical and popular choice:
 
-## Quick start (local, without Docker)
+- minimal moving parts
+- easy to inspect and review in Git
+- no ORM lock-in while business objects are still stabilizing
+
+## Run locally (without full Docker app container)
 
 1. Copy env file:
 
@@ -34,21 +45,25 @@ For the scaffold phase, `pg` keeps the dependency footprint small and avoids loc
    cp .env.example .env
    ```
 
-2. Update `.env` values if needed.
-
-3. Install dependencies:
+2. Install dependencies:
 
    ```bash
    npm install
    ```
 
-4. Run a local PostgreSQL instance (or start only `db` with Compose):
+3. Start PostgreSQL only:
 
    ```bash
    docker compose up -d db
    ```
 
-5. Start the app:
+4. Apply starter schema:
+
+   ```bash
+   npm run db:apply
+   ```
+
+5. Run app:
 
    ```bash
    npm run dev
@@ -56,71 +71,107 @@ For the scaffold phase, `pg` keeps the dependency footprint small and avoids loc
 
 6. Open http://localhost:3000
 
-## Run with Docker Compose (recommended for self-hosting baseline)
+## Run with Docker Compose
 
-1. Copy env file:
+1. Copy env file and adjust values:
 
    ```bash
    cp .env.example .env
    ```
 
-2. Edit database credentials and `DATABASE_URL`.
-
-3. Start everything:
+2. Start app + db:
 
    ```bash
    docker compose up -d --build
    ```
 
-4. Visit:
-   - App: http://localhost:3000
-   - Health: http://localhost:3000/api/health
-
-5. Stop:
+3. Apply schema from host once DB is up:
 
    ```bash
-   docker compose down
+   npm run db:apply
    ```
 
-## Persistent DB storage
+4. Check status:
 
-`docker-compose.yml` defines a named volume `postgres_data`, mounted at `/var/lib/postgresql/data` in the PostgreSQL container.
+   ```bash
+   docker compose ps
+   ```
 
-That means database data survives container recreation (unless volumes are explicitly removed).
+## Unraid update flow (`update.sh`)
 
-## Routes included
+Use the root script to perform a predictable update:
 
-- `/` — landing page
-- `/login` — placeholder login page
-- `/dashboard` — placeholder dashboard page
-- `/api/health` — returns service health JSON
+```bash
+./update.sh
+```
 
-## Unraid and self-hosting notes
+It will:
 
-- This setup works as a baseline on Unraid via Docker Compose support/community tooling.
-- Keep `.env` private and use strong credentials.
-- Put this behind a reverse proxy and HTTPS before internet exposure.
-- See [`docs/self-hosting.md`](docs/self-hosting.md) for practical deployment notes.
+1. `git pull --ff-only`
+2. `docker compose up -d --build`
+3. `docker compose ps`
 
-## Not production-hardened yet
+The script exits immediately on error (`set -euo pipefail`) and runs from the repository root.
 
-This scaffold is intentionally minimal and **not production hardened** yet. Missing pieces include:
+## Postgres persistence
 
-- auth and authorization
-- secure session handling
-- migrations and schema governance
-- backup/restore automation
-- observability, rate limiting, and hardening
+`docker-compose.yml` uses:
 
-## Roadmap (planned)
+- named volume: `postgres_data`
+- mount target: `/var/lib/postgresql/data`
 
-- Authentication
-- Roles and permissions
-- Customers
-- Suppliers
-- Sites
-- DNO quotes
-- IDNO tenders
-- ICP tenders
-- Estimator
-- Optional Stripe integration later
+This preserves data across container restarts/rebuilds unless you explicitly remove volumes.
+
+## Current route map
+
+- `/` - Home
+- `/login` - Login placeholder
+- `/dashboard` - Dashboard placeholder
+- `/customers` - Customers placeholder
+- `/suppliers` - Suppliers placeholder
+- `/sites` - Sites placeholder
+- `/quotes/dno` - DNO quotes placeholder
+- `/tenders/idno` - IDNO tenders placeholder
+- `/tenders/icp` - ICP tenders placeholder
+- `/api/health` - Service + DB health JSON
+
+## Starter schema (current)
+
+Schema file: `db/schema/001_initial.sql`
+
+Core tables:
+
+- `organizations`
+- `users`
+- `memberships`
+- `customers`
+- `suppliers`
+- `sites`
+
+Common fields included where appropriate:
+
+- `id` (UUID)
+- `organization_id`
+- `name`
+- type/status fields (`*_type`, `status`, `role`)
+- `created_at`
+- `updated_at` (maintained by trigger)
+
+## Roadmap (short)
+
+- Auth (lean self-hosted baseline)
+- Roles/permissions refinement
+- Customers module depth
+- Suppliers module depth
+- Sites module depth
+- DNO quote workflow
+- IDNO tender workflow
+- ICP tender workflow
+- Estimator module
+- Optional billing integration later
+
+## Notes
+
+- Keep `.env` private and out of Git.
+- Do not expose PostgreSQL publicly.
+- This scaffold is intentionally simple and not enterprise-architected yet.

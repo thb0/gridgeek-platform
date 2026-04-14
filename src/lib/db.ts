@@ -29,3 +29,12 @@ export async function checkDbConnection(): Promise<boolean> {
     return false;
   }
 }
+
+export async function getDatabaseTime(): Promise<string | null> {
+  try {
+    const result = await getDbPool().query<{ now: string }>("SELECT NOW()::text AS now");
+    return result.rows[0]?.now ?? null;
+  } catch {
+    return null;
+  }
+}
