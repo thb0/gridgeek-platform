@@ -7,6 +7,7 @@ export const DELIVERY_MODELS = [
   "appoint_icp_for_some_packages",
   "act_as_icp_for_clients"
 ] as const;
+export const WORKING_STYLES = ["customer_first", "site_first"] as const;
 export const WORK_PACKAGE_TYPES = [
   "dno_quote",
   "idno_tender",
@@ -23,6 +24,7 @@ export const MANAGED_BY_TYPES = [
 
 export type BusinessType = (typeof BUSINESS_TYPES)[number];
 export type DeliveryModel = (typeof DELIVERY_MODELS)[number];
+export type WorkingStyle = (typeof WORKING_STYLES)[number];
 export type WorkPackageType = (typeof WORK_PACKAGE_TYPES)[number];
 export type ManagedByType = (typeof MANAGED_BY_TYPES)[number];
 
@@ -35,6 +37,7 @@ export type OrganizationProfile = {
   contactPhone: string | null;
   businessType: BusinessType | null;
   defaultDeliveryModel: DeliveryModel | null;
+  workingStyle: WorkingStyle | null;
   setupCompletedAt: string | null;
 };
 
@@ -276,6 +279,7 @@ type OrganizationProfileRow = {
   contactPhone: string | null;
   businessType: BusinessType | null;
   defaultDeliveryModel: DeliveryModel | null;
+  workingStyle: WorkingStyle | null;
   setupCompletedAt: Date | null;
 };
 
@@ -472,6 +476,7 @@ export async function getPrimaryOrganizationProfile(): Promise<OrganizationProfi
       contact_phone AS "contactPhone",
       business_type AS "businessType",
       default_delivery_model AS "defaultDeliveryModel",
+      working_style AS "workingStyle",
       setup_completed_at AS "setupCompletedAt"
     FROM organizations
     ORDER BY created_at ASC
@@ -490,6 +495,7 @@ export async function getPrimaryOrganizationProfile(): Promise<OrganizationProfi
     contactPhone: organization.contactPhone,
     businessType: organization.businessType,
     defaultDeliveryModel: organization.defaultDeliveryModel,
+    workingStyle: organization.workingStyle,
     setupCompletedAt: organization.setupCompletedAt?.toISOString() ?? null
   };
 }

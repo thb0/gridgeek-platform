@@ -30,7 +30,7 @@ export default async function SetupPage() {
           <p className="small text-uppercase fw-semibold text-primary mb-2">First login setup</p>
           <h1 className="display-6 mb-3">Company setup wizard</h1>
           <p className="lead mb-0">
-            This short setup flow shapes the app defaults for your business type and how you manage site work packages.
+            This short setup flow shapes the app defaults for your business type, workspace emphasis, and how you manage site work packages.
           </p>
         </div>
       </section>

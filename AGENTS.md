@@ -15,8 +15,9 @@ GridGeek Platform is a lean, self-hosted connections commercial tracker designed
 - Site-centric commercial data model where quotes and tenders hang off the site record
 - One shared supplier register with supplier type used to distinguish DNO / IDNO / ICP / Other
 - Separate commercial tables for `dno_quotes`, `idno_tenders`, and `icp_tenders`
-- First-login organization setup flow for company profile, business type, and default delivery model
+- First-login organization setup flow for company profile, business type, default delivery model, and preferred working style
 - Business-type-aware defaults should shape UI behavior without forking the underlying data model
+- Organization-level working style should change navigation/workspace emphasis only; the database model stays site-centric underneath
 - Site responsibility tracking should live in `site_work_packages`, with one row per site/package for responsibility + status
 - Docker builds should stay lean via `.dockerignore`, deterministic installs, and a simple container healthcheck against `/api/health`
 - Host-run app and DB scripts should tolerate Docker-style `DATABASE_URL` values by falling back from `db` to `127.0.0.1` outside the container

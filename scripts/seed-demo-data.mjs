@@ -505,6 +505,7 @@ async function seedDemoData() {
           contact_phone = $5,
           business_type = $6,
           default_delivery_model = $7,
+          working_style = $8,
           setup_completed_at = NOW()
         WHERE id = $1
       `,
@@ -515,7 +516,8 @@ async function seedDemoData() {
         "ops@gridgeek.local",
         "0113 555 0000",
         "Solar",
-        "appoint_icp_for_some_packages"
+        "appoint_icp_for_some_packages",
+        "customer_first"
       ]
     );
 
@@ -934,5 +936,606 @@ async function seedDemoData() {
     await pool.end();
   }
 }
+
+
+customers.push(
+  {
+    id: "33333333-3333-3333-3333-333333333334",
+    name: "Crestline Logistics",
+    status: "Active",
+    customerType: "industrial",
+    accountOwner: "Harriet Cole",
+    mainContact: "Darren Pike",
+    email: "darren.pike@crestline.example",
+    phone: "0118 555 0104",
+    billingAddress: "88 Bennet Road, Reading, RG2",
+    notes: "Depot electrification programme with phased fleet transition."
+  },
+  {
+    id: "33333333-3333-3333-3333-333333333335",
+    name: "Meridian Living",
+    status: "Active",
+    customerType: "housing",
+    accountOwner: "Nadia Price",
+    mainContact: "Sophie Allen",
+    email: "s.allen@meridian-living.example",
+    phone: "01908 555 0105",
+    billingAddress: "4 Central Square, Milton Keynes, MK9",
+    notes: "Residential rollout balancing LV capacity and affordability."
+  },
+  {
+    id: "33333333-3333-3333-3333-333333333336",
+    name: "Northbank Charging",
+    status: "Active",
+    customerType: "cpo",
+    accountOwner: "Sam Carter",
+    mainContact: "Marcus Lee",
+    email: "marcus@northbank-charging.example",
+    phone: "0121 555 0106",
+    billingAddress: "14 Foundry Lane, Birmingham, B6",
+    notes: "Rapid charging hubs with aggressive energisation dates."
+  },
+  {
+    id: "33333333-3333-3333-3333-333333333337",
+    name: "Flint Storage Partners",
+    status: "Data Gathering",
+    customerType: "bess",
+    accountOwner: "Harriet Cole",
+    mainContact: "Elliot Nash",
+    email: "elliot@flint-storage.example",
+    phone: "0114 555 0107",
+    billingAddress: "2 Furnace Walk, Sheffield, S1",
+    notes: "BESS portfolio still comparing direct and adoptable routes."
+  },
+  {
+    id: "33333333-3333-3333-3333-333333333338",
+    name: "Alder Schools Trust",
+    status: "Active",
+    customerType: "public-sector",
+    accountOwner: "Nadia Price",
+    mainContact: "Helen Morris",
+    email: "helen.morris@alder-schools.example",
+    phone: "01234 555 0108",
+    billingAddress: "1 County Hall, Bedford, MK40",
+    notes: "Multi-site decarbonisation scheme with grant milestones."
+  }
+);
+
+suppliers.push(
+  {
+    id: "44444444-4444-4444-4444-444444444446",
+    name: "UK Power Networks",
+    status: "Active",
+    supplierType: "DNO",
+    region: "London / South East / East",
+    mainContact: "Rachel Field",
+    email: "connections@ukpn.example",
+    phone: "0203 555 2006",
+    address: "Newington House, London",
+    frameworkStatus: "Preferred",
+    notes: "Useful benchmark for South East schemes."
+  },
+  {
+    id: "44444444-4444-4444-4444-444444444447",
+    name: "Last Mile Electricity",
+    status: "Active",
+    supplierType: "IDNO",
+    region: "National",
+    mainContact: "Tom Bailey",
+    email: "adoptions@lastmile.example",
+    phone: "0207 555 2007",
+    address: "London Office",
+    frameworkStatus: "Approved",
+    notes: "Often competitive where programme certainty matters."
+  },
+  {
+    id: "44444444-4444-4444-4444-444444444448",
+    name: "ESP Utilities",
+    status: "Active",
+    supplierType: "IDNO",
+    region: "National",
+    mainContact: "Jessica Ward",
+    email: "tenders@esp.example",
+    phone: "0191 555 2008",
+    address: "Newcastle Office",
+    frameworkStatus: "On Framework",
+    notes: "Strong on adoptable residential work packages."
+  },
+  {
+    id: "44444444-4444-4444-4444-444444444449",
+    name: "Axis Connect",
+    status: "Active",
+    supplierType: "ICP",
+    region: "South / Midlands",
+    mainContact: "Luke Perry",
+    email: "estimating@axis-connect.example",
+    phone: "0118 555 2009",
+    address: "Reading Office",
+    frameworkStatus: "Preferred",
+    notes: "Good fit for fleet and depot energisation projects."
+  },
+  {
+    id: "44444444-4444-4444-4444-44444444444a",
+    name: "Cedar Utility Services",
+    status: "Active",
+    supplierType: "ICP",
+    region: "National",
+    mainContact: "Naomi Briggs",
+    email: "commercial@cedar-utility.example",
+    phone: "0151 555 2010",
+    address: "Liverpool Office",
+    frameworkStatus: "Approved",
+    notes: "Useful comparator where civils are carved out."
+  }
+);
+
+sites.push(
+  {
+    id: "55555555-5555-5555-5555-555555555554",
+    customerId: "33333333-3333-3333-3333-333333333334",
+    name: "Crestline Reading Depot",
+    status: "Under Review",
+    siteType: "industrial",
+    address: "Bennet Road Depot, Reading",
+    postcode: "RG2 0AA",
+    dnoArea: "UK Power Networks",
+    idnoArea: "South East",
+    voltageLevelSought: "HV",
+    loadRequiredKva: 1250,
+    exportRequiredKva: 150,
+    batteryIncluded: true,
+    chargerCount: 18,
+    chargerType: "DC fleet",
+    targetEnergisationDate: "2026-09-10",
+    budget: 315000,
+    internalOwner: "Harriet Cole",
+    nextAction: "Choose route before board capex review",
+    notes: "Fleet depot with on-site battery support for demand smoothing."
+  },
+  {
+    id: "55555555-5555-5555-5555-555555555555",
+    customerId: "33333333-3333-3333-3333-333333333335",
+    name: "Meridian Homes Phase 4",
+    status: "Quotes Pending",
+    siteType: "residential",
+    address: "Brickfield Crescent, Milton Keynes",
+    postcode: "MK10 7LP",
+    dnoArea: "UK Power Networks",
+    idnoArea: "South East",
+    voltageLevelSought: "LV",
+    loadRequiredKva: 540,
+    exportRequiredKva: 0,
+    batteryIncluded: false,
+    chargerCount: 14,
+    chargerType: "AC residential",
+    targetEnergisationDate: "2026-11-18",
+    budget: 168000,
+    internalOwner: "Nadia Price",
+    nextAction: "Lock in preferred adoption assumptions",
+    notes: "Housing phase where affordability matters more than outright speed."
+  },
+  {
+    id: "55555555-5555-5555-5555-555555555556",
+    customerId: "33333333-3333-3333-3333-333333333336",
+    name: "Northbank Fleet Hub",
+    status: "Applied",
+    siteType: "cpo",
+    address: "Tyburn Road, Birmingham",
+    postcode: "B24 8HJ",
+    dnoArea: "National Grid Electricity Distribution",
+    idnoArea: "Midlands",
+    voltageLevelSought: "HV",
+    loadRequiredKva: 2100,
+    exportRequiredKva: 0,
+    batteryIncluded: true,
+    chargerCount: 28,
+    chargerType: "DC ultra-rapid",
+    targetEnergisationDate: "2027-02-14",
+    budget: 520000,
+    internalOwner: "Sam Carter",
+    nextAction: "Chase DNO acknowledgement and ICP shortlist",
+    notes: "Large fleet hub with significant programme pressure from anchor tenant."
+  },
+  {
+    id: "55555555-5555-5555-5555-555555555557",
+    customerId: "33333333-3333-3333-3333-333333333337",
+    name: "Flint Grid Battery Park",
+    status: "Data Gathering",
+    siteType: "bess",
+    address: "Park Lane, Sheffield",
+    postcode: "S9 1XH",
+    dnoArea: "Northern Powergrid",
+    idnoArea: "Yorkshire",
+    voltageLevelSought: "HV",
+    loadRequiredKva: 2400,
+    exportRequiredKva: 2400,
+    batteryIncluded: true,
+    chargerCount: 0,
+    chargerType: null,
+    targetEnergisationDate: "2027-05-01",
+    budget: 610000,
+    internalOwner: "Harriet Cole",
+    nextAction: "Complete export assumption pack for tender issue",
+    notes: "Export-led project where route choice will pivot on asset value and programme."
+  },
+  {
+    id: "55555555-5555-5555-5555-555555555558",
+    customerId: "33333333-3333-3333-3333-333333333338",
+    name: "Alder Schools Cluster",
+    status: "Accepted",
+    siteType: "public-sector",
+    address: "County Hall Estate, Bedford",
+    postcode: "MK40 1SQ",
+    dnoArea: "UK Power Networks",
+    idnoArea: "South East",
+    voltageLevelSought: "LV",
+    loadRequiredKva: 380,
+    exportRequiredKva: 60,
+    batteryIncluded: false,
+    chargerCount: 10,
+    chargerType: "AC mixed",
+    targetEnergisationDate: "2026-07-28",
+    budget: 132000,
+    internalOwner: "Nadia Price",
+    nextAction: "Prepare delivery mobilisation pack",
+    notes: "Grant-backed school decarbonisation bundle already through route selection."
+  }
+);
+
+dnoQuotes.push(
+  {
+    id: "66666666-6666-6666-6666-666666666664",
+    siteId: "55555555-5555-5555-5555-555555555554",
+    supplierId: "44444444-4444-4444-4444-444444444446",
+    dnoReference: "UKPN-2026-041",
+    applicationDate: "2026-03-14",
+    quoteReceivedDate: "2026-04-02",
+    quoteExpiryDate: "2026-04-29",
+    connectionOfferStatus: "Received",
+    pointOfConnectionSummary: "11kV ring extension from nearby primary",
+    capacityOfferedKva: 1250,
+    costExVat: 286000,
+    reinforcementCost: 76000,
+    contestableAmount: 72000,
+    nonContestableAmount: 214000,
+    deliveryTimeframeDays: 118,
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Requires weekend outage window coordination."
+  },
+  {
+    id: "66666666-6666-6666-6666-666666666665",
+    siteId: "55555555-5555-5555-5555-555555555555",
+    supplierId: "44444444-4444-4444-4444-444444444446",
+    dnoReference: "UKPN-2026-052",
+    applicationDate: "2026-03-22",
+    quoteReceivedDate: "2026-04-05",
+    quoteExpiryDate: "2026-05-03",
+    connectionOfferStatus: "Under Review",
+    pointOfConnectionSummary: "LV extension from new feeder pillar",
+    capacityOfferedKva: 540,
+    costExVat: 154000,
+    reinforcementCost: 38000,
+    contestableAmount: 24000,
+    nonContestableAmount: 130000,
+    deliveryTimeframeDays: 84,
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Affordable route but subject to easement sign-off."
+  },
+  {
+    id: "66666666-6666-6666-6666-666666666666",
+    siteId: "55555555-5555-5555-5555-555555555556",
+    supplierId: "44444444-4444-4444-4444-444444444441",
+    dnoReference: "NGED-2026-063",
+    applicationDate: "2026-04-11",
+    quoteReceivedDate: null,
+    quoteExpiryDate: null,
+    connectionOfferStatus: "Requested",
+    pointOfConnectionSummary: null,
+    capacityOfferedKva: null,
+    costExVat: null,
+    reinforcementCost: null,
+    contestableAmount: null,
+    nonContestableAmount: null,
+    deliveryTimeframeDays: null,
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Large demand application awaiting formal validation."
+  },
+  {
+    id: "66666666-6666-6666-6666-666666666667",
+    siteId: "55555555-5555-5555-5555-555555555557",
+    supplierId: "44444444-4444-4444-4444-444444444441",
+    dnoReference: "NPG-2026-071",
+    applicationDate: "2026-03-30",
+    quoteReceivedDate: "2026-04-12",
+    quoteExpiryDate: "2026-05-10",
+    connectionOfferStatus: "Received",
+    pointOfConnectionSummary: "33kV bay extension with export protections",
+    capacityOfferedKva: 2400,
+    costExVat: 535000,
+    reinforcementCost: 182000,
+    contestableAmount: 115000,
+    nonContestableAmount: 420000,
+    deliveryTimeframeDays: 176,
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Export protections and relay settings are major assumptions."
+  },
+  {
+    id: "66666666-6666-6666-6666-666666666668",
+    siteId: "55555555-5555-5555-5555-555555555558",
+    supplierId: "44444444-4444-4444-4444-444444444446",
+    dnoReference: "UKPN-2026-030",
+    applicationDate: "2026-02-08",
+    quoteReceivedDate: "2026-02-24",
+    quoteExpiryDate: "2026-04-18",
+    connectionOfferStatus: "Accepted",
+    pointOfConnectionSummary: "LV service upgrade with kiosk metering",
+    capacityOfferedKva: 380,
+    costExVat: 128000,
+    reinforcementCost: 18000,
+    contestableAmount: 22000,
+    nonContestableAmount: 106000,
+    deliveryTimeframeDays: 58,
+    accepted: true,
+    acceptanceDate: "2026-03-07",
+    notes: "Accepted to protect grant programme."
+  }
+);
+
+idnoTenders.push(
+  {
+    id: "77777777-7777-7777-7777-777777777774",
+    siteId: "55555555-5555-5555-5555-555555555554",
+    supplierId: "44444444-4444-4444-4444-444444444447",
+    tenderIssueDate: "2026-03-18",
+    tenderReturnDate: "2026-04-01",
+    tenderExpiryDate: "2026-04-27",
+    status: "Received",
+    grossAdoptableWorksValue: 255000,
+    assetValuePayment: 88000,
+    nonContestableCost: 86000,
+    contestableCost: 124000,
+    deliveryDurationDays: 102,
+    adoptionAssumptions: "Fleet landlord legal pack within four weeks",
+    programmeAssumptions: "Mobilisation after depot civils award",
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Balanced commercial route with manageable assumptions."
+  },
+  {
+    id: "77777777-7777-7777-7777-777777777775",
+    siteId: "55555555-5555-5555-5555-555555555555",
+    supplierId: "44444444-4444-4444-4444-444444444448",
+    tenderIssueDate: "2026-03-28",
+    tenderReturnDate: "2026-04-10",
+    tenderExpiryDate: "2026-05-06",
+    status: "Under Review",
+    grossAdoptableWorksValue: 148000,
+    assetValuePayment: 46000,
+    nonContestableCost: 52000,
+    contestableCost: 79000,
+    deliveryDurationDays: 76,
+    adoptionAssumptions: "Standard residential plot schedule",
+    programmeAssumptions: "Road closure dates to be agreed",
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Competitive if adoption assumptions hold."
+  },
+  {
+    id: "77777777-7777-7777-7777-777777777776",
+    siteId: "55555555-5555-5555-5555-555555555556",
+    supplierId: "44444444-4444-4444-4444-444444444447",
+    tenderIssueDate: "2026-04-15",
+    tenderReturnDate: null,
+    tenderExpiryDate: null,
+    status: "Requested",
+    grossAdoptableWorksValue: null,
+    assetValuePayment: null,
+    nonContestableCost: null,
+    contestableCost: null,
+    deliveryDurationDays: null,
+    adoptionAssumptions: "To follow on validation of charging load profile",
+    programmeAssumptions: "Tender pack under assembly",
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Still awaiting full return."
+  },
+  {
+    id: "77777777-7777-7777-7777-777777777777",
+    siteId: "55555555-5555-5555-5555-555555555557",
+    supplierId: "44444444-4444-4444-4444-444444444448",
+    tenderIssueDate: "2026-04-02",
+    tenderReturnDate: "2026-04-13",
+    tenderExpiryDate: "2026-05-09",
+    status: "Received",
+    grossAdoptableWorksValue: 465000,
+    assetValuePayment: 172000,
+    nonContestableCost: 156000,
+    contestableCost: 208000,
+    deliveryDurationDays: 134,
+    adoptionAssumptions: "Export curtailment assumptions capped at present threshold",
+    programmeAssumptions: "Commissioning after relay sign-off",
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Strong net value if export assumptions remain acceptable."
+  },
+  {
+    id: "77777777-7777-7777-7777-777777777778",
+    siteId: "55555555-5555-5555-5555-555555555558",
+    supplierId: "44444444-4444-4444-4444-444444444447",
+    tenderIssueDate: "2026-02-14",
+    tenderReturnDate: "2026-02-28",
+    tenderExpiryDate: "2026-04-15",
+    status: "Accepted",
+    grossAdoptableWorksValue: 122000,
+    assetValuePayment: 34000,
+    nonContestableCost: 39000,
+    contestableCost: 62000,
+    deliveryDurationDays: 54,
+    adoptionAssumptions: "Standard trust legal pack",
+    programmeAssumptions: "School holiday works window locked",
+    accepted: true,
+    acceptanceDate: "2026-03-05",
+    notes: "Accepted as part of the final route decision."
+  }
+);
+
+icpTenders.push(
+  {
+    id: "88888888-8888-8888-8888-888888888883",
+    siteId: "55555555-5555-5555-5555-555555555554",
+    supplierId: "44444444-4444-4444-4444-444444444449",
+    tenderIssueDate: "2026-03-18",
+    tenderReturnDate: "2026-03-31",
+    tenderExpiryDate: "2026-04-26",
+    status: "Received",
+    contestableWorksCost: 136000,
+    exclusions: "Metering cabinet and landlord trench reinstatement excluded",
+    deliveryDurationDays: 88,
+    deliveryAssumptions: "Civils split with depot contractor",
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Good programme fit for fleet go-live."
+  },
+  {
+    id: "88888888-8888-8888-8888-888888888884",
+    siteId: "55555555-5555-5555-5555-555555555555",
+    supplierId: "44444444-4444-4444-4444-44444444444a",
+    tenderIssueDate: "2026-03-28",
+    tenderReturnDate: "2026-04-09",
+    tenderExpiryDate: "2026-05-04",
+    status: "Received",
+    contestableWorksCost: 68000,
+    exclusions: "Utility diversions excluded",
+    deliveryDurationDays: 61,
+    deliveryAssumptions: "Customer civils ready before mobilisation",
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Fastest ICP route on the housing package."
+  },
+  {
+    id: "88888888-8888-8888-8888-888888888885",
+    siteId: "55555555-5555-5555-5555-555555555556",
+    supplierId: "44444444-4444-4444-4444-444444444449",
+    tenderIssueDate: "2026-04-16",
+    tenderReturnDate: null,
+    tenderExpiryDate: null,
+    status: "Requested",
+    contestableWorksCost: null,
+    exclusions: "To be confirmed",
+    deliveryDurationDays: null,
+    deliveryAssumptions: "Tender pack under issue",
+    accepted: false,
+    acceptanceDate: null,
+    notes: "ICP shortlist still being finalised."
+  },
+  {
+    id: "88888888-8888-8888-8888-888888888886",
+    siteId: "55555555-5555-5555-5555-555555555557",
+    supplierId: "44444444-4444-4444-4444-44444444444a",
+    tenderIssueDate: "2026-04-04",
+    tenderReturnDate: "2026-04-15",
+    tenderExpiryDate: "2026-05-12",
+    status: "Received",
+    contestableWorksCost: 214000,
+    exclusions: "Protection studies excluded",
+    deliveryDurationDays: 126,
+    deliveryAssumptions: "Relay commissioning by specialist subcontractor",
+    accepted: false,
+    acceptanceDate: null,
+    notes: "Clean comparator for the BESS contestable scope."
+  },
+  {
+    id: "88888888-8888-8888-8888-888888888887",
+    siteId: "55555555-5555-5555-5555-555555555558",
+    supplierId: "44444444-4444-4444-4444-44444444444a",
+    tenderIssueDate: "2026-02-16",
+    tenderReturnDate: "2026-02-26",
+    tenderExpiryDate: "2026-04-12",
+    status: "Accepted",
+    contestableWorksCost: 51000,
+    exclusions: "Metering package excluded",
+    deliveryDurationDays: 46,
+    deliveryAssumptions: "Works aligned to holiday access window",
+    accepted: true,
+    acceptanceDate: "2026-03-05",
+    notes: "Selected for certainty and clean school access plan."
+  }
+);
+
+const extraWorkPackageTemplates = [
+  {
+    siteId: "55555555-5555-5555-5555-555555555554",
+    dno: { managedByType: "internal", managedBySupplierId: null, status: "Received", notes: "Commercial review underway against IDNO route." },
+    idno: { managedByType: "internal", managedBySupplierId: "44444444-4444-4444-4444-444444444447", status: "Received", notes: "Adoption route in active comparison." },
+    icp: { managedByType: "icp", managedBySupplierId: "44444444-4444-4444-4444-444444444449", status: "Received", notes: "Preferred ICP candidate currently leading." },
+    civil: { managedByType: "external", managedBySupplierId: null, status: "Requested", notes: "Depot civils package being procured separately." }
+  },
+  {
+    siteId: "55555555-5555-5555-5555-555555555555",
+    dno: { managedByType: "internal", managedBySupplierId: null, status: "Under Review", notes: "Need to decide if direct route is still viable." },
+    idno: { managedByType: "consultant", managedBySupplierId: "44444444-4444-4444-4444-444444444448", status: "Under Review", notes: "Residential adoption assumptions under review." },
+    icp: { managedByType: "consultant", managedBySupplierId: "44444444-4444-4444-4444-44444444444a", status: "Received", notes: "Contestable price returned and awaiting decision." },
+    civil: { managedByType: "internal", managedBySupplierId: null, status: "Not Started", notes: "Civil scope still being defined with principal contractor." }
+  },
+  {
+    siteId: "55555555-5555-5555-5555-555555555556",
+    dno: { managedByType: "internal", managedBySupplierId: null, status: "Requested", notes: "Application acknowledged but offer not yet issued." },
+    idno: { managedByType: "icp", managedBySupplierId: "44444444-4444-4444-4444-444444444447", status: "Requested", notes: "ICP partner coordinating adoption route responses." },
+    icp: { managedByType: "icp", managedBySupplierId: "44444444-4444-4444-4444-444444444449", status: "Requested", notes: "Tender issue still in motion." },
+    civil: { managedByType: "external", managedBySupplierId: null, status: "Clarification Needed", notes: "Ground conditions survey needed before civils tender." }
+  },
+  {
+    siteId: "55555555-5555-5555-5555-555555555557",
+    dno: { managedByType: "internal", managedBySupplierId: null, status: "Received", notes: "Export assumptions need decision-log coverage." },
+    idno: { managedByType: "internal", managedBySupplierId: "44444444-4444-4444-4444-444444444448", status: "Received", notes: "Asset value is material to route comparison." },
+    icp: { managedByType: "consultant", managedBySupplierId: "44444444-4444-4444-4444-44444444444a", status: "Received", notes: "Contestable delivery estimate now available." },
+    civil: { managedByType: "not_required", managedBySupplierId: null, status: "Not Required", notes: "Civil package folded into ICP assumptions for now." }
+  },
+  {
+    siteId: "55555555-5555-5555-5555-555555555558",
+    dno: { managedByType: "internal", managedBySupplierId: null, status: "Accepted", notes: "Accepted to protect the grant timeline." },
+    idno: { managedByType: "internal", managedBySupplierId: "44444444-4444-4444-4444-444444444447", status: "Accepted", notes: "Adoption route accepted alongside DNO works." },
+    icp: { managedByType: "internal", managedBySupplierId: "44444444-4444-4444-4444-44444444444a", status: "Accepted", notes: "ICP route locked in for mobilisation." },
+    civil: { managedByType: "external", managedBySupplierId: null, status: "Accepted", notes: "Holiday works civils package placed." }
+  }
+];
+
+const makeWorkPackageId = (index) => "bbbbbbbb-bbbb-bbbb-bbbb-" + String(index).padStart(12, "0");
+const extraWorkPackages = extraWorkPackageTemplates.flatMap((template, templateIndex) => {
+  const baseIndex = templateIndex * 4;
+
+  return [
+    {
+      id: makeWorkPackageId(baseIndex + 1),
+      siteId: template.siteId,
+      packageType: "dno_quote",
+      ...template.dno
+    },
+    {
+      id: makeWorkPackageId(baseIndex + 2),
+      siteId: template.siteId,
+      packageType: "idno_tender",
+      ...template.idno
+    },
+    {
+      id: makeWorkPackageId(baseIndex + 3),
+      siteId: template.siteId,
+      packageType: "icp_tender",
+      ...template.icp
+    },
+    {
+      id: makeWorkPackageId(baseIndex + 4),
+      siteId: template.siteId,
+      packageType: "civil_tender",
+      ...template.civil
+    }
+  ];
+});
+
+workPackages.push(...extraWorkPackages);
 
 seedDemoData();

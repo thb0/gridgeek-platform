@@ -7,7 +7,7 @@ import { getSiteList, requireOrganizationSetup } from "@/lib/platform-data";
 export const dynamic = "force-dynamic";
 
 export default async function SitesPage() {
-  await requireOrganizationSetup();
+  const organization = await requireOrganizationSetup();
   const sites = await getSiteList().catch(() => null);
 
   if (!sites) {
@@ -26,7 +26,9 @@ export default async function SitesPage() {
           <div>
             <h1 className="h3 mb-2">Sites</h1>
             <p className="mb-0 text-body-secondary">
-              Master project register. Quotes, tenders, and route decisions all hang off the site record.
+              {organization.workingStyle === "customer_first"
+                ? "Operational project register. Sites still hold the working detail even when your team starts from the customer view."
+                : "Master project register. Quotes, tenders, and route decisions all hang off the site record."}
             </p>
           </div>
           <div className="small text-body-secondary">{sites.length} sites loaded</div>

@@ -14,7 +14,7 @@ export default async function CompanySettingsPage() {
           <p className="small text-uppercase fw-semibold text-body-secondary mb-2">Settings</p>
           <h1 className="h3 mb-2">Company profile</h1>
           <p className="mb-0 text-body-secondary">
-            Edit organization defaults, business type, and delivery model without changing the site-centric data structure.
+            Edit organization defaults, working style, business type, and delivery model without changing the site-centric data structure.
           </p>
         </div>
       </section>

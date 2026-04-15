@@ -7,9 +7,8 @@ import {
   BUSINESS_TYPES,
   DELIVERY_MODELS,
   MANAGED_BY_TYPES,
+  WORKING_STYLES,
   WORK_PACKAGE_TYPES,
-  type BusinessType,
-  type DeliveryModel,
   type ManagedByType,
   type WorkPackageType
 } from "@/lib/platform-data";
@@ -24,6 +23,7 @@ export async function saveOrganizationSetup(formData: FormData) {
   const contactPhone = readOptionalString(formData, "contactPhone");
   const businessType = readEnum(formData, "businessType", BUSINESS_TYPES);
   const defaultDeliveryModel = readEnum(formData, "defaultDeliveryModel", DELIVERY_MODELS);
+  const workingStyle = readEnum(formData, "workingStyle", WORKING_STYLES);
 
   await pool.query(
     `
@@ -36,6 +36,7 @@ export async function saveOrganizationSetup(formData: FormData) {
         contact_phone = $6,
         business_type = $7,
         default_delivery_model = $8,
+        working_style = $9,
         setup_completed_at = NOW()
       WHERE id = $1
     `,
@@ -47,13 +48,16 @@ export async function saveOrganizationSetup(formData: FormData) {
       contactEmail,
       contactPhone,
       businessType,
-      defaultDeliveryModel
+      defaultDeliveryModel,
+      workingStyle
     ]
   );
 
   revalidatePath("/");
   revalidatePath("/setup");
   revalidatePath("/settings/company");
+  revalidatePath("/customers");
+  revalidatePath("/sites");
   redirect("/dashboard");
 }
 
@@ -67,6 +71,7 @@ export async function saveOrganizationSettings(formData: FormData) {
   const contactPhone = readOptionalString(formData, "contactPhone");
   const businessType = readEnum(formData, "businessType", BUSINESS_TYPES);
   const defaultDeliveryModel = readEnum(formData, "defaultDeliveryModel", DELIVERY_MODELS);
+  const workingStyle = readEnum(formData, "workingStyle", WORKING_STYLES);
 
   await pool.query(
     `
@@ -78,7 +83,8 @@ export async function saveOrganizationSettings(formData: FormData) {
         contact_email = $5,
         contact_phone = $6,
         business_type = $7,
-        default_delivery_model = $8
+        default_delivery_model = $8,
+        working_style = $9
       WHERE id = $1
     `,
     [
@@ -89,12 +95,15 @@ export async function saveOrganizationSettings(formData: FormData) {
       contactEmail,
       contactPhone,
       businessType,
-      defaultDeliveryModel
+      defaultDeliveryModel,
+      workingStyle
     ]
   );
 
   revalidatePath("/settings/company");
+  revalidatePath("/");
   revalidatePath("/dashboard");
+  revalidatePath("/customers");
   revalidatePath("/sites");
 }
 

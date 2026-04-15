@@ -7,7 +7,7 @@ import { getCustomerList, requireOrganizationSetup } from "@/lib/platform-data";
 export const dynamic = "force-dynamic";
 
 export default async function CustomersPage() {
-  await requireOrganizationSetup();
+  const organization = await requireOrganizationSetup();
   const customers = await getCustomerList().catch(() => null);
 
   if (!customers) {
@@ -26,7 +26,9 @@ export default async function CustomersPage() {
           <div>
             <h1 className="h3 mb-2">Customers</h1>
             <p className="mb-0 text-body-secondary">
-              One record per client, with related sites and commercial totals rolling up from the site layer.
+              {organization.workingStyle === "site_first"
+                ? "Commercial relationship register. Link sites back to customers without changing the site-led operational backbone."
+                : "One record per client, with related sites and commercial totals rolling up from the site layer."}
             </p>
           </div>
           <div className="small text-body-secondary">{customers.length} customers loaded</div>

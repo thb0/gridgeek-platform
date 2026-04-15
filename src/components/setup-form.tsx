@@ -1,4 +1,9 @@
-import { BUSINESS_TYPES, DELIVERY_MODELS, type OrganizationProfile } from "@/lib/platform-data";
+import {
+  BUSINESS_TYPES,
+  DELIVERY_MODELS,
+  WORKING_STYLES,
+  type OrganizationProfile
+} from "@/lib/platform-data";
 
 type SetupFormProps = {
   organization: OrganizationProfile;
@@ -10,6 +15,17 @@ const deliveryModelLabels: Record<(typeof DELIVERY_MODELS)[number], string> = {
   manage_all_packages: "We manage all packages",
   appoint_icp_for_some_packages: "We often appoint an ICP to manage some packages",
   act_as_icp_for_clients: "We are the ICP delivering packages for clients"
+};
+
+const workingStyleLabels: Record<(typeof WORKING_STYLES)[number], { title: string; description: string }> = {
+  customer_first: {
+    title: "Customer-first",
+    description: "We manage portfolios of customers with multiple sites"
+  },
+  site_first: {
+    title: "Site-first",
+    description: "We manage individual sites/projects directly"
+  }
 };
 
 export function SetupForm({ organization, action, submitLabel }: SetupFormProps) {
@@ -87,6 +103,37 @@ export function SetupForm({ organization, action, submitLabel }: SetupFormProps)
                 />
                 <span className="fw-semibold">{deliveryModelLabels[deliveryModel]}</span>
               </label>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="card shadow-sm border-0">
+        <div className="card-body p-4">
+          <h2 className="h5 mb-3">Preferred working style</h2>
+          <p className="mb-3 text-body-secondary">
+            This changes navigation emphasis and workspace cues without changing the underlying site-centric structure.
+          </p>
+          <div className="row g-3">
+            {WORKING_STYLES.map((workingStyle) => (
+              <div className="col-md-6" key={workingStyle}>
+                <label className="card border-1 h-100 p-3">
+                  <input
+                    className="form-check-input mb-3"
+                    defaultChecked={
+                      organization.workingStyle
+                        ? organization.workingStyle === workingStyle
+                        : workingStyle === "customer_first"
+                    }
+                    name="workingStyle"
+                    required
+                    type="radio"
+                    value={workingStyle}
+                  />
+                  <span className="fw-semibold d-block">{workingStyleLabels[workingStyle].title}</span>
+                  <span className="small text-body-secondary">{workingStyleLabels[workingStyle].description}</span>
+                </label>
+              </div>
             ))}
           </div>
         </div>
