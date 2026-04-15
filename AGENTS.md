@@ -15,7 +15,11 @@ GridGeek Platform is a lean, self-hosted connections commercial tracker designed
 - Site-centric commercial data model where quotes and tenders hang off the site record
 - One shared supplier register with supplier type used to distinguish DNO / IDNO / ICP / Other
 - Separate commercial tables for `dno_quotes`, `idno_tenders`, and `icp_tenders`
+- First-login organization setup flow for company profile, business type, and default delivery model
+- Business-type-aware defaults should shape UI behavior without forking the underlying data model
+- Site responsibility tracking should live in `site_work_packages`, with one row per site/package for responsibility + status
 - Docker builds should stay lean via `.dockerignore`, deterministic installs, and a simple container healthcheck against `/api/health`
+- Host-run app and DB scripts should tolerate Docker-style `DATABASE_URL` values by falling back from `db` to `127.0.0.1` outside the container
 - Keep the Next.js toolchain on a current patched release to avoid stale-framework security issues
 - On Next.js 16+, use the ESLint CLI with `eslint.config.mjs` instead of `next lint`
 
@@ -25,3 +29,4 @@ GridGeek Platform is a lean, self-hosted connections commercial tracker designed
 - Prefer dependable, broadly adopted tooling.
 - Keep operational scripts simple (`update.sh` for pull + rebuild + status).
 - Preserve the site-first backbone when adding new features such as contacts, documents, timeline, alerts, and decision logging.
+- Prefer flexible work-package records over hardcoded per-business-type workflow branches or per-site responsibility columns.

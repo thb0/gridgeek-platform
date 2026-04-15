@@ -2,11 +2,12 @@ import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCurrency, formatDate, formatDays } from "@/lib/format";
-import { getIcpTenders } from "@/lib/platform-data";
+import { getIcpTenders, requireOrganizationSetup } from "@/lib/platform-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function IcpTendersPage() {
+  await requireOrganizationSetup();
   const tenders = await getIcpTenders().catch(() => null);
 
   if (!tenders) {

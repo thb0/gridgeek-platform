@@ -1,4 +1,16 @@
-export default function HomePage() {
+import Link from "next/link";
+import { getPrimaryOrganizationProfile } from "@/lib/platform-data";
+import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const organization = await getPrimaryOrganizationProfile().catch(() => null);
+
+  if (organization && !organization.setupCompletedAt) {
+    redirect("/setup");
+  }
+
   return (
     <div className="d-grid gap-4">
       <section className="card shadow-sm border-0 grid-hero">
@@ -12,8 +24,8 @@ export default function HomePage() {
                 cleanly on Docker-first home servers and company hosts.
               </p>
               <p className="mb-0 text-body-secondary">
-                The scaffold now includes a live dashboard, database-backed module pages, and a seed path
-                for getting a fresh install visible in minutes.
+                The scaffold now includes company setup, business-type aware defaults, site work-package
+                responsibilities, and live commercial tracking pages.
               </p>
             </div>
             <div className="col-lg-4">
@@ -35,10 +47,9 @@ export default function HomePage() {
         <div className="col-lg-4">
           <article className="card shadow-sm border-0 h-100">
             <div className="card-body p-4">
-              <h2 className="h5">What is live now</h2>
+              <h2 className="h5">Company-aware startup</h2>
               <p className="text-body-secondary mb-0">
-                Shared navigation, Postgres-backed health checks, seeded records, and server-rendered lists
-                for customers, suppliers, and sites.
+                Setup wizard, editable company profile, and business-type defaults for CPO, ICP, Solar, and BESS workflows.
               </p>
             </div>
           </article>
@@ -46,10 +57,9 @@ export default function HomePage() {
         <div className="col-lg-4">
           <article className="card shadow-sm border-0 h-100">
             <div className="card-body p-4">
-              <h2 className="h5">Why it stays lean</h2>
+              <h2 className="h5">Site work packages</h2>
               <p className="text-body-secondary mb-0">
-                Plain SQL files, lightweight `pg` tooling, and no ORM or auth framework lock-in before the
-                core workflows settle down.
+                Every site can track DNO, IDNO, ICP, and Civil responsibilities without hardcoding business-type branches.
               </p>
             </div>
           </article>
@@ -57,11 +67,11 @@ export default function HomePage() {
         <div className="col-lg-4">
           <article className="card shadow-sm border-0 h-100">
             <div className="card-body p-4">
-              <h2 className="h5">What we should build next</h2>
-              <p className="text-body-secondary mb-0">
-                Lean authentication, organization-aware permissions, and the first real quote or tender
-                workflow on top of these foundation entities.
+              <h2 className="h5">Main working page</h2>
+              <p className="text-body-secondary mb-3">
+                Site detail now acts as the main working page, with work-package responsibility controls at the top.
               </p>
+              <Link className="btn btn-outline-primary btn-sm" href="/dashboard">Open dashboard</Link>
             </div>
           </article>
         </div>

@@ -9,8 +9,10 @@ This is the **next lean milestone** of the scaffold. It now includes:
 - Next.js app shell with shared navigation and site-centric tracker pages
 - PostgreSQL-backed foundation with starter schema SQL
 - Lightweight DB tooling using `pg` + plain SQL files
+- First-login setup wizard for company profile, business type, and default delivery model
 - Server-rendered dashboard and module list pages backed by PostgreSQL
 - Site detail pages with related DNO / IDNO / ICP sections
+- Site work-package responsibility tracking for DNO, IDNO, ICP, and civils
 - Commercial comparison page for route review
 - Demo seed script for fresh self-hosted installs
 - Docker Compose setup for app + persistent Postgres
@@ -24,9 +26,12 @@ This is the **next lean milestone** of the scaffold. It now includes:
 - Starter schema apply command (`npm run db:apply`)
 - Demo data seed command (`npm run db:seed`)
 - Live dashboard metrics for active sites, commercial pressure, and average return/value signals
+- Setup flow that gates the main app until organization details are completed
 - Live customers, suppliers, and sites tables
 - Customer, supplier, and site detail pages
+- Settings page for company profile and workflow defaults
 - DNO quote, IDNO tender, ICP tender, and commercial comparison tables
+- Delivery responsibility panel on each site with work-package owner, supplier, status, and notes
 - Docker build/run flow
 - Persistent Postgres volume (`postgres_data`)
 
@@ -43,6 +48,7 @@ Current framework baseline:
 - Next.js 16
 - React 19
 - ESLint CLI with flat config (`eslint.config.mjs`)
+- host-side DB access automatically falls back from `db` to `127.0.0.1` when you run scripts outside Docker
 
 ### Why this DB tooling?
 
@@ -153,6 +159,7 @@ This preserves data across container restarts/rebuilds unless you explicitly rem
 
 - `/` - Home
 - `/login` - Login placeholder
+- `/setup` - First-login organization setup wizard
 - `/dashboard` - Dashboard with commercial KPIs
 - `/customers` - Live customer list
 - `/customers/[id]` - Customer detail
@@ -164,6 +171,7 @@ This preserves data across container restarts/rebuilds unless you explicitly rem
 - `/tenders/idno` - IDNO tenders table
 - `/tenders/icp` - ICP tenders table
 - `/comparison` - Commercial comparison table
+- `/settings/company` - Company profile and workflow defaults
 - `/api/health` - Service + DB health JSON
 
 ## Data model
@@ -172,6 +180,7 @@ Schema files:
 
 - `db/schema/001_initial.sql`
 - `db/schema/002_site_centric_commercial_tracker.sql`
+- `db/schema/003_org_setup_and_work_packages.sql`
 
 Core tables:
 
@@ -181,6 +190,7 @@ Core tables:
 - `customers`
 - `suppliers`
 - `sites`
+- `site_work_packages`
 - `dno_quotes`
 - `idno_tenders`
 - `icp_tenders`
@@ -190,7 +200,24 @@ Key design choices:
 - `sites` are the parent operational record
 - one supplier table serves DNO / IDNO / ICP / Other via `supplier_type`
 - commercial records stay in separate tables because their cost logic differs
+- organization setup stores company profile, business type, and default workflow preferences
+- work-package responsibilities are data-driven per site instead of hardcoded in the site table
 - IDNO net cost is calculated as contestable + non-contestable - asset value
+
+Default work packages:
+
+- `dno_quote`
+- `idno_tender`
+- `icp_tender`
+- `civil_tender`
+
+Managed-by values:
+
+- `internal`
+- `icp`
+- `consultant`
+- `external`
+- `not_required`
 
 Seed workflow:
 

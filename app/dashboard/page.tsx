@@ -2,11 +2,17 @@ import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import { MetricCard } from "@/components/metric-card";
 import { formatCurrency, formatDays } from "@/lib/format";
-import { getCommercialComparisonList, getDashboardMetrics, getSiteList } from "@/lib/platform-data";
+import {
+  getCommercialComparisonList,
+  getDashboardMetrics,
+  getSiteList,
+  requireOrganizationSetup
+} from "@/lib/platform-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const organization = await requireOrganizationSetup();
   const dashboardData = await Promise.all([
     getDashboardMetrics(),
     getSiteList(),
@@ -34,7 +40,7 @@ export default async function DashboardPage() {
             <div>
               <h1 className="h3 mb-2">Dashboard</h1>
               <p className="text-body-secondary mb-0">
-                Birds-eye view of live sites, commercial pressure, and route comparison signals.
+                Birds-eye view of live sites, commercial pressure, and route comparison signals for {organization.name}.
               </p>
             </div>
             <div className="text-lg-end">

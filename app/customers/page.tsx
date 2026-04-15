@@ -2,11 +2,12 @@ import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { getCustomerList } from "@/lib/platform-data";
+import { getCustomerList, requireOrganizationSetup } from "@/lib/platform-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomersPage() {
+  await requireOrganizationSetup();
   const customers = await getCustomerList().catch(() => null);
 
   if (!customers) {

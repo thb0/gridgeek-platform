@@ -2,11 +2,12 @@ import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCurrency, formatDate, formatDays, formatNumber } from "@/lib/format";
-import { getDnoQuotes } from "@/lib/platform-data";
+import { getDnoQuotes, requireOrganizationSetup } from "@/lib/platform-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function DnoQuotesPage() {
+  await requireOrganizationSetup();
   const quotes = await getDnoQuotes().catch(() => null);
 
   if (!quotes) {

@@ -3,15 +3,144 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-const databaseUrl = process.env.DATABASE_URL;
+function resolveDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
 
-if (!databaseUrl) {
-  console.error("DATABASE_URL is not set.");
-  process.exit(1);
+  if (!databaseUrl) {
+    console.error("DATABASE_URL is not set.");
+    process.exit(1);
+  }
+
+  if (process.env.RUNNING_IN_DOCKER === "true") {
+    return databaseUrl;
+  }
+
+  const fallbackHost = process.env.DATABASE_HOST_FALLBACK ?? "127.0.0.1";
+
+  try {
+    const resolvedUrl = new URL(databaseUrl);
+    if (resolvedUrl.hostname === "db") {
+      resolvedUrl.hostname = fallbackHost;
+    }
+    return resolvedUrl.toString();
+  } catch {
+    return databaseUrl;
+  }
 }
 
 const seedOrganizationId = "11111111-1111-1111-1111-111111111111";
 const seedUserId = "22222222-2222-2222-2222-222222222222";
+
+const workPackages = [
+  {
+    id: "99999999-9999-9999-9999-999999999991",
+    siteId: "55555555-5555-5555-5555-555555555551",
+    packageType: "dno_quote",
+    managedByType: "internal",
+    managedBySupplierId: null,
+    status: "Received",
+    notes: "Managed directly while commercial comparison is active."
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999992",
+    siteId: "55555555-5555-5555-5555-555555555551",
+    packageType: "idno_tender",
+    managedByType: "internal",
+    managedBySupplierId: null,
+    status: "Received",
+    notes: "Internal team coordinating IDNO tenders."
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999993",
+    siteId: "55555555-5555-5555-5555-555555555551",
+    packageType: "icp_tender",
+    managedByType: "consultant",
+    managedBySupplierId: "44444444-4444-4444-4444-444444444444",
+    status: "Received",
+    notes: "External delivery option being compared."
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999994",
+    siteId: "55555555-5555-5555-5555-555555555551",
+    packageType: "civil_tender",
+    managedByType: "external",
+    managedBySupplierId: "44444444-4444-4444-4444-444444444444",
+    status: "Requested",
+    notes: "Civil scope pending final bill of quantities."
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999995",
+    siteId: "55555555-5555-5555-5555-555555555552",
+    packageType: "dno_quote",
+    managedByType: "icp",
+    managedBySupplierId: "44444444-4444-4444-4444-444444444444",
+    status: "Under Review",
+    notes: "Client asked ICP to manage DNO interactions."
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999996",
+    siteId: "55555555-5555-5555-5555-555555555552",
+    packageType: "idno_tender",
+    managedByType: "icp",
+    managedBySupplierId: "44444444-4444-4444-4444-444444444442",
+    status: "Under Review",
+    notes: "Managed by appointed ICP partner."
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999997",
+    siteId: "55555555-5555-5555-5555-555555555552",
+    packageType: "icp_tender",
+    managedByType: "internal",
+    managedBySupplierId: "44444444-4444-4444-4444-444444444445",
+    status: "Accepted",
+    notes: "External ICP selected."
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999998",
+    siteId: "55555555-5555-5555-5555-555555555552",
+    packageType: "civil_tender",
+    managedByType: "internal",
+    managedBySupplierId: null,
+    status: "Not Started",
+    notes: "Client-side civils decision pending."
+  },
+  {
+    id: "99999999-9999-9999-9999-999999999999",
+    siteId: "55555555-5555-5555-5555-555555555553",
+    packageType: "dno_quote",
+    managedByType: "internal",
+    managedBySupplierId: null,
+    status: "Requested",
+    notes: "Application pack in progress."
+  },
+  {
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+    siteId: "55555555-5555-5555-5555-555555555553",
+    packageType: "idno_tender",
+    managedByType: "not_required",
+    managedBySupplierId: null,
+    status: "Not Required",
+    notes: "No IDNO route needed at current stage."
+  },
+  {
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2",
+    siteId: "55555555-5555-5555-5555-555555555553",
+    packageType: "icp_tender",
+    managedByType: "consultant",
+    managedBySupplierId: null,
+    status: "Not Started",
+    notes: "Awaiting delivery strategy decision."
+  },
+  {
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3",
+    siteId: "55555555-5555-5555-5555-555555555553",
+    packageType: "civil_tender",
+    managedByType: "external",
+    managedBySupplierId: null,
+    status: "Not Started",
+    notes: "Placeholder for later civils scope."
+  }
+];
 
 const customers = [
   {
@@ -348,7 +477,7 @@ const icpTenders = [
 ];
 
 async function seedDemoData() {
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool({ connectionString: resolveDatabaseUrl() });
   const client = await pool.connect();
 
   try {
@@ -359,9 +488,35 @@ async function seedDemoData() {
         INSERT INTO organizations (id, name, status)
         VALUES ($1, $2, 'active')
         ON CONFLICT (id) DO UPDATE
-        SET name = EXCLUDED.name, status = EXCLUDED.status
+        SET
+          name = EXCLUDED.name,
+          status = EXCLUDED.status
       `,
       [seedOrganizationId, "GridGeek Demo Org"]
+    );
+
+    await client.query(
+      `
+        UPDATE organizations
+        SET
+          company_address = $2,
+          contact_name = $3,
+          contact_email = $4,
+          contact_phone = $5,
+          business_type = $6,
+          default_delivery_model = $7,
+          setup_completed_at = NOW()
+        WHERE id = $1
+      `,
+      [
+        seedOrganizationId,
+        "GridGeek House, Leeds, LS1 4AA",
+        "GridGeek Operations",
+        "ops@gridgeek.local",
+        "0113 555 0000",
+        "Solar",
+        "appoint_icp_for_some_packages"
+      ]
     );
 
     await client.query(
@@ -731,6 +886,38 @@ async function seedDemoData() {
           tender.accepted,
           tender.acceptanceDate,
           tender.notes
+        ]
+      );
+    }
+
+    for (const workPackage of workPackages) {
+      await client.query(
+        `
+          INSERT INTO site_work_packages (
+            id,
+            site_id,
+            package_type,
+            managed_by_type,
+            managed_by_supplier_id,
+            status,
+            notes
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT (site_id, package_type) DO UPDATE
+          SET
+            managed_by_type = EXCLUDED.managed_by_type,
+            managed_by_supplier_id = EXCLUDED.managed_by_supplier_id,
+            status = EXCLUDED.status,
+            notes = EXCLUDED.notes
+        `,
+        [
+          workPackage.id,
+          workPackage.siteId,
+          workPackage.packageType,
+          workPackage.managedByType,
+          workPackage.managedBySupplierId,
+          workPackage.status,
+          workPackage.notes
         ]
       );
     }

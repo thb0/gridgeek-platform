@@ -1,16 +1,35 @@
 import { Pool } from "pg";
 
-const databaseUrl = process.env.DATABASE_URL;
+function resolveDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
 
-let pool: Pool | null = null;
-
-export function getDbPool(): Pool {
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is not set.");
   }
 
+  const runningInDocker = process.env.RUNNING_IN_DOCKER === "true";
+  if (runningInDocker) {
+    return databaseUrl;
+  }
+
+  const fallbackHost = process.env.DATABASE_HOST_FALLBACK ?? "127.0.0.1";
+
+  try {
+    const resolvedUrl = new URL(databaseUrl);
+    if (resolvedUrl.hostname === "db") {
+      resolvedUrl.hostname = fallbackHost;
+    }
+    return resolvedUrl.toString();
+  } catch {
+    return databaseUrl;
+  }
+}
+
+let pool: Pool | null = null;
+
+export function getDbPool(): Pool {
   if (!pool) {
-    pool = new Pool({ connectionString: databaseUrl });
+    pool = new Pool({ connectionString: resolveDatabaseUrl() });
   }
 
   return pool;

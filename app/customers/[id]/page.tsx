@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/status-badge";
 import { formatNumber } from "@/lib/format";
-import { getCustomerDetail } from "@/lib/platform-data";
+import { getCustomerDetail, requireOrganizationSetup } from "@/lib/platform-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireOrganizationSetup();
   const { id } = await params;
   const customer = await getCustomerDetail(id);
 

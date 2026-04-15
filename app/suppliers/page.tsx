@@ -2,7 +2,7 @@ import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import { StatusBadge } from "@/components/status-badge";
 import { formatDays } from "@/lib/format";
-import { getSupplierList } from "@/lib/platform-data";
+import { getSupplierList, requireOrganizationSetup } from "@/lib/platform-data";
 
 const supplierTypes = ["All", "DNO", "IDNO", "ICP", "Other"];
 
@@ -13,6 +13,7 @@ export default async function SuppliersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requireOrganizationSetup();
   const params = await searchParams;
   const selectedType = typeof params.type === "string" ? params.type : "All";
   const suppliers = await getSupplierList(selectedType).catch(() => null);

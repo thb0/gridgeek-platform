@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { WorkPackageForm } from "@/components/work-package-form";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCurrency, formatDate, formatDays, formatNumber } from "@/lib/format";
-import { getSiteDetail } from "@/lib/platform-data";
+import { getSiteDetail, getSupplierList, requireOrganizationSetup } from "@/lib/platform-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function SiteDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireOrganizationSetup();
   const { id } = await params;
-  const site = await getSiteDetail(id);
+  const [site, suppliers] = await Promise.all([getSiteDetail(id), getSupplierList()]);
 
   if (!site) {
     notFound();
@@ -64,6 +66,29 @@ export default async function SiteDetailPage({ params }: { params: Promise<{ id:
               <p className="mb-0"><strong>Expiry pressure:</strong> <StatusBadge value={site.comparison.expiryPressure} /></p>
             </div>
           </article>
+        </div>
+      </section>
+
+      <section className="card shadow-sm border-0">
+        <div className="card-body p-4">
+          <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+            <div>
+              <h2 className="h5 mb-1">Delivery responsibilities</h2>
+              <p className="mb-0 text-body-secondary">
+                Decide who is managing each work package without hiding it from the site record.
+              </p>
+            </div>
+            <Link className="btn btn-outline-secondary btn-sm" href="/settings/company">
+              Edit company defaults
+            </Link>
+          </div>
+          <div className="row g-4">
+            {site.workPackages.map((workPackage) => (
+              <div className="col-xl-6" key={workPackage.id}>
+                <WorkPackageForm siteId={site.id} suppliers={suppliers} workPackage={workPackage} />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -1,4 +1,42 @@
+import { redirect } from "next/navigation";
 import { getDatabaseTime, getDbPool } from "@/lib/db";
+
+export const BUSINESS_TYPES = ["CPO", "ICP", "Solar", "BESS"] as const;
+export const DELIVERY_MODELS = [
+  "manage_all_packages",
+  "appoint_icp_for_some_packages",
+  "act_as_icp_for_clients"
+] as const;
+export const WORK_PACKAGE_TYPES = [
+  "dno_quote",
+  "idno_tender",
+  "icp_tender",
+  "civil_tender"
+] as const;
+export const MANAGED_BY_TYPES = [
+  "internal",
+  "icp",
+  "consultant",
+  "external",
+  "not_required"
+] as const;
+
+export type BusinessType = (typeof BUSINESS_TYPES)[number];
+export type DeliveryModel = (typeof DELIVERY_MODELS)[number];
+export type WorkPackageType = (typeof WORK_PACKAGE_TYPES)[number];
+export type ManagedByType = (typeof MANAGED_BY_TYPES)[number];
+
+export type OrganizationProfile = {
+  id: string;
+  name: string;
+  companyAddress: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  businessType: BusinessType | null;
+  defaultDeliveryModel: DeliveryModel | null;
+  setupCompletedAt: string | null;
+};
 
 export type DashboardMetrics = {
   activeSites: number;
@@ -71,6 +109,16 @@ export type SupplierDetail = {
   icpTenders: IcpTenderRow[];
 };
 
+export type SiteWorkPackage = {
+  id: string;
+  packageType: WorkPackageType;
+  managedByType: ManagedByType;
+  managedBySupplierId: string | null;
+  managedBySupplierName: string | null;
+  status: string;
+  notes: string | null;
+};
+
 export type SiteListItem = {
   id: string;
   name: string;
@@ -85,6 +133,7 @@ export type SiteListItem = {
   icpTenderStatus: string | null;
   nextAction: string;
   internalOwner: string | null;
+  workPackages: SiteWorkPackage[];
 };
 
 export type SiteDetail = {
@@ -108,6 +157,7 @@ export type SiteDetail = {
   internalOwner: string | null;
   nextAction: string | null;
   notes: string | null;
+  workPackages: SiteWorkPackage[];
   comparison: SiteComparison;
   dnoQuotes: DnoQuoteRow[];
   idnoTenders: IdnoTenderRow[];
@@ -217,6 +267,18 @@ type DashboardRow = {
   averageIcpTenderValue: number | null;
 };
 
+type OrganizationProfileRow = {
+  id: string;
+  name: string;
+  companyAddress: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  businessType: BusinessType | null;
+  defaultDeliveryModel: DeliveryModel | null;
+  setupCompletedAt: Date | null;
+};
+
 type CustomerListRow = {
   id: string;
   name: string;
@@ -309,6 +371,17 @@ type SiteDetailRow = {
   notes: string | null;
 };
 
+type WorkPackageRow = {
+  id: string;
+  siteId: string;
+  packageType: WorkPackageType;
+  managedByType: ManagedByType;
+  managedBySupplierId: string | null;
+  managedBySupplierName: string | null;
+  status: string;
+  notes: string | null;
+};
+
 type DnoQuoteQueryRow = {
   id: string;
   siteId: string;
@@ -387,6 +460,48 @@ type ComparisonRow = {
   earliestExpiryDays: number | null;
 };
 
+export async function getPrimaryOrganizationProfile(): Promise<OrganizationProfile | null> {
+  const pool = getDbPool();
+  const result = await pool.query<OrganizationProfileRow>(`
+    SELECT
+      id,
+      name,
+      company_address AS "companyAddress",
+      contact_name AS "contactName",
+      contact_email AS "contactEmail",
+      contact_phone AS "contactPhone",
+      business_type AS "businessType",
+      default_delivery_model AS "defaultDeliveryModel",
+      setup_completed_at AS "setupCompletedAt"
+    FROM organizations
+    ORDER BY created_at ASC
+    LIMIT 1
+  `);
+
+  const organization = result.rows[0];
+  if (!organization) return null;
+
+  return {
+    id: organization.id,
+    name: organization.name,
+    companyAddress: organization.companyAddress,
+    contactName: organization.contactName,
+    contactEmail: organization.contactEmail,
+    contactPhone: organization.contactPhone,
+    businessType: organization.businessType,
+    defaultDeliveryModel: organization.defaultDeliveryModel,
+    setupCompletedAt: organization.setupCompletedAt?.toISOString() ?? null
+  };
+}
+
+export async function requireOrganizationSetup() {
+  const organization = await getPrimaryOrganizationProfile().catch(() => null);
+  if (!organization || !organization.setupCompletedAt) {
+    redirect("/setup");
+  }
+  return organization;
+}
+
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const pool = getDbPool();
   const [metricsResult, databaseTime] = await Promise.all([
@@ -433,7 +548,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
           WHERE acceptance_date >= date_trunc('month', CURRENT_DATE)
         ) AS "acceptedThisMonth",
         (
-          SELECT AVG(EXTRACT(DAY FROM quote_received_date - application_date))::double precision
+          SELECT AVG((quote_received_date - application_date)::double precision)
           FROM dno_quotes
           WHERE application_date IS NOT NULL AND quote_received_date IS NOT NULL
         ) AS "averageDnoReturnDays",
@@ -450,7 +565,6 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   ]);
 
   const row = metricsResult.rows[0];
-
   return {
     activeSites: Number(row?.activeSites ?? 0),
     quotesOutstanding: Number(row?.quotesOutstanding ?? 0),
@@ -547,7 +661,7 @@ export async function getCustomerList(): Promise<CustomerListItem[]> {
 
 export async function getCustomerDetail(customerId: string): Promise<CustomerDetail | null> {
   const pool = getDbPool();
-  const [customerResult, sitesResult] = await Promise.all([
+  const [customerResult, sitesResult, workPackages] = await Promise.all([
     pool.query<CustomerDetailRow>(
       `
         SELECT
@@ -576,9 +690,9 @@ export async function getCustomerDetail(customerId: string): Promise<CustomerDet
           sites.dno_area AS "dnoArea",
           sites.load_required_kva AS "loadRequiredKva",
           sites.status,
-          (SELECT connection_offer_status FROM dno_quotes WHERE site_id = sites.id ORDER BY updated_at DESC LIMIT 1) AS "dnoQuoteStatus",
-          (SELECT status FROM idno_tenders WHERE site_id = sites.id ORDER BY updated_at DESC LIMIT 1) AS "idnoTenderStatus",
-          (SELECT status FROM icp_tenders WHERE site_id = sites.id ORDER BY updated_at DESC LIMIT 1) AS "icpTenderStatus",
+          (SELECT status FROM site_work_packages WHERE site_id = sites.id AND package_type = 'dno_quote' LIMIT 1) AS "dnoQuoteStatus",
+          (SELECT status FROM site_work_packages WHERE site_id = sites.id AND package_type = 'idno_tender' LIMIT 1) AS "idnoTenderStatus",
+          (SELECT status FROM site_work_packages WHERE site_id = sites.id AND package_type = 'icp_tender' LIMIT 1) AS "icpTenderStatus",
           COALESCE(sites.next_action, 'Review commercial options') AS "nextAction",
           sites.internal_owner AS "internalOwner"
         FROM sites
@@ -587,14 +701,12 @@ export async function getCustomerDetail(customerId: string): Promise<CustomerDet
         ORDER BY sites.name ASC
       `,
       [customerId]
-    )
+    ),
+    getSiteWorkPackages()
   ]);
 
   const customer = customerResult.rows[0];
-
-  if (!customer) {
-    return null;
-  }
+  if (!customer) return null;
 
   return {
     id: customer.id,
@@ -606,7 +718,10 @@ export async function getCustomerDetail(customerId: string): Promise<CustomerDet
     phone: customer.phone,
     billingAddress: customer.billingAddress,
     notes: customer.notes,
-    sites: sitesResult.rows.map(mapSiteListRow)
+    sites: sitesResult.rows.map((row) => ({
+      ...mapSiteListRow(row),
+      workPackages: workPackages.filter((workPackage) => workPackage.siteId === row.id)
+    }))
   };
 }
 
@@ -614,10 +729,7 @@ export async function getSupplierList(supplierType?: string): Promise<SupplierLi
   const pool = getDbPool();
   const params: unknown[] = [];
   const whereClause = supplierType && supplierType !== "All" ? "WHERE suppliers.supplier_type = $1" : "";
-
-  if (whereClause) {
-    params.push(supplierType);
-  }
+  if (whereClause) params.push(supplierType);
 
   const result = await pool.query<SupplierListRow>(
     `
@@ -628,11 +740,11 @@ export async function getSupplierList(supplierType?: string): Promise<SupplierLi
           COUNT(*) FILTER (WHERE accepted = TRUE)::text AS win_count,
           AVG(return_days)::double precision AS average_return_days
         FROM (
-          SELECT supplier_id, connection_offer_status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, EXTRACT(DAY FROM quote_received_date - application_date) AS return_days FROM dno_quotes
+          SELECT supplier_id, connection_offer_status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, (quote_received_date - application_date)::double precision AS return_days FROM dno_quotes
           UNION ALL
-          SELECT supplier_id, status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, EXTRACT(DAY FROM tender_return_date - tender_issue_date) AS return_days FROM idno_tenders
+          SELECT supplier_id, status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, (tender_return_date - tender_issue_date)::double precision AS return_days FROM idno_tenders
           UNION ALL
-          SELECT supplier_id, status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, EXTRACT(DAY FROM tender_return_date - tender_issue_date) AS return_days FROM icp_tenders
+          SELECT supplier_id, status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, (tender_return_date - tender_issue_date)::double precision AS return_days FROM icp_tenders
         ) supplier_events
         GROUP BY supplier_id
       )
@@ -677,11 +789,11 @@ export async function getSupplierDetail(supplierId: string): Promise<SupplierDet
             COUNT(*) FILTER (WHERE accepted = TRUE)::text AS win_count,
             AVG(return_days)::double precision AS average_return_days
           FROM (
-            SELECT supplier_id, connection_offer_status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, EXTRACT(DAY FROM quote_received_date - application_date) AS return_days FROM dno_quotes
+            SELECT supplier_id, connection_offer_status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, (quote_received_date - application_date)::double precision AS return_days FROM dno_quotes
             UNION ALL
-            SELECT supplier_id, status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, EXTRACT(DAY FROM tender_return_date - tender_issue_date) AS return_days FROM idno_tenders
+            SELECT supplier_id, status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, (tender_return_date - tender_issue_date)::double precision AS return_days FROM idno_tenders
             UNION ALL
-            SELECT supplier_id, status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, EXTRACT(DAY FROM tender_return_date - tender_issue_date) AS return_days FROM icp_tenders
+            SELECT supplier_id, status IN ('Requested', 'Clarification Needed', 'Under Review') AS live_status, accepted, (tender_return_date - tender_issue_date)::double precision AS return_days FROM icp_tenders
           ) supplier_events
           GROUP BY supplier_id
         )
@@ -711,10 +823,7 @@ export async function getSupplierDetail(supplierId: string): Promise<SupplierDet
   ]);
 
   const supplier = supplierResult.rows[0];
-
-  if (!supplier) {
-    return null;
-  }
+  if (!supplier) return null;
 
   return {
     id: supplier.id,
@@ -738,42 +847,85 @@ export async function getSupplierDetail(supplierId: string): Promise<SupplierDet
   };
 }
 
+export async function getSiteWorkPackages(siteId?: string): Promise<(SiteWorkPackage & { siteId: string })[]> {
+  const pool = getDbPool();
+  const params: unknown[] = [];
+  const whereClause = siteId ? "WHERE site_work_packages.site_id = $1" : "";
+  if (siteId) params.push(siteId);
+
+  const result = await pool.query<WorkPackageRow>(
+    `
+      SELECT
+        site_work_packages.id,
+        site_work_packages.site_id AS "siteId",
+        site_work_packages.package_type AS "packageType",
+        site_work_packages.managed_by_type AS "managedByType",
+        site_work_packages.managed_by_supplier_id AS "managedBySupplierId",
+        suppliers.name AS "managedBySupplierName",
+        site_work_packages.status,
+        site_work_packages.notes
+      FROM site_work_packages
+      LEFT JOIN suppliers ON suppliers.id = site_work_packages.managed_by_supplier_id
+      ${whereClause}
+      ORDER BY site_work_packages.site_id ASC, site_work_packages.package_type ASC
+    `,
+    params
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    siteId: row.siteId,
+    packageType: row.packageType,
+    managedByType: row.managedByType,
+    managedBySupplierId: row.managedBySupplierId,
+    managedBySupplierName: row.managedBySupplierName,
+    status: row.status,
+    notes: row.notes
+  }));
+}
+
 export async function getSiteList(): Promise<SiteListItem[]> {
   const pool = getDbPool();
-  const result = await pool.query<SiteListRow>(`
-    SELECT
-      sites.id,
-      sites.name,
-      sites.customer_id AS "customerId",
-      customers.name AS "customerName",
-      sites.postcode,
-      sites.dno_area AS "dnoArea",
-      sites.load_required_kva AS "loadRequiredKva",
-      sites.status,
-      (SELECT connection_offer_status FROM dno_quotes WHERE site_id = sites.id ORDER BY updated_at DESC LIMIT 1) AS "dnoQuoteStatus",
-      (SELECT status FROM idno_tenders WHERE site_id = sites.id ORDER BY updated_at DESC LIMIT 1) AS "idnoTenderStatus",
-      (SELECT status FROM icp_tenders WHERE site_id = sites.id ORDER BY updated_at DESC LIMIT 1) AS "icpTenderStatus",
-      COALESCE(
-        sites.next_action,
-        CASE
-          WHEN NOT EXISTS (SELECT 1 FROM dno_quotes WHERE site_id = sites.id) THEN 'Request DNO quote'
-          WHEN NOT EXISTS (SELECT 1 FROM idno_tenders WHERE site_id = sites.id) THEN 'Issue IDNO tender'
-          WHEN NOT EXISTS (SELECT 1 FROM icp_tenders WHERE site_id = sites.id) THEN 'Issue ICP tender'
-          ELSE 'Review commercial comparison'
-        END
-      ) AS "nextAction",
-      sites.internal_owner AS "internalOwner"
-    FROM sites
-    LEFT JOIN customers ON customers.id = sites.customer_id
-    ORDER BY sites.updated_at DESC, sites.name ASC
-  `);
+  const [result, workPackages] = await Promise.all([
+    pool.query<SiteListRow>(`
+      SELECT
+        sites.id,
+        sites.name,
+        sites.customer_id AS "customerId",
+        customers.name AS "customerName",
+        sites.postcode,
+        sites.dno_area AS "dnoArea",
+        sites.load_required_kva AS "loadRequiredKva",
+        sites.status,
+        (SELECT status FROM site_work_packages WHERE site_id = sites.id AND package_type = 'dno_quote' LIMIT 1) AS "dnoQuoteStatus",
+        (SELECT status FROM site_work_packages WHERE site_id = sites.id AND package_type = 'idno_tender' LIMIT 1) AS "idnoTenderStatus",
+        (SELECT status FROM site_work_packages WHERE site_id = sites.id AND package_type = 'icp_tender' LIMIT 1) AS "icpTenderStatus",
+        COALESCE(
+          sites.next_action,
+          CASE
+            WHEN NOT EXISTS (SELECT 1 FROM dno_quotes WHERE site_id = sites.id) THEN 'Request DNO quote'
+            WHEN NOT EXISTS (SELECT 1 FROM idno_tenders WHERE site_id = sites.id) THEN 'Issue IDNO tender'
+            WHEN NOT EXISTS (SELECT 1 FROM icp_tenders WHERE site_id = sites.id) THEN 'Issue ICP tender'
+            ELSE 'Review commercial comparison'
+          END
+        ) AS "nextAction",
+        sites.internal_owner AS "internalOwner"
+      FROM sites
+      LEFT JOIN customers ON customers.id = sites.customer_id
+      ORDER BY sites.updated_at DESC, sites.name ASC
+    `),
+    getSiteWorkPackages()
+  ]);
 
-  return result.rows.map(mapSiteListRow);
+  return result.rows.map((row) => ({
+    ...mapSiteListRow(row),
+    workPackages: workPackages.filter((workPackage) => workPackage.siteId === row.id)
+  }));
 }
 
 export async function getSiteDetail(siteId: string): Promise<SiteDetail | null> {
   const pool = getDbPool();
-  const [siteResult, comparisonList, dnoQuotes, idnoTenders, icpTenders] = await Promise.all([
+  const [siteResult, comparisonList, dnoQuotes, idnoTenders, icpTenders, workPackages] = await Promise.all([
     pool.query<SiteDetailRow>(
       `
         SELECT
@@ -806,15 +958,12 @@ export async function getSiteDetail(siteId: string): Promise<SiteDetail | null> 
     getCommercialComparisonList(),
     getDnoQuotes({ siteId }),
     getIdnoTenders({ siteId }),
-    getIcpTenders({ siteId })
+    getIcpTenders({ siteId }),
+    getSiteWorkPackages(siteId)
   ]);
 
   const site = siteResult.rows[0];
-
-  if (!site) {
-    return null;
-  }
-
+  if (!site) return null;
   const comparison = comparisonList.find((item) => item.siteId === siteId);
 
   return {
@@ -838,6 +987,7 @@ export async function getSiteDetail(siteId: string): Promise<SiteDetail | null> 
     internalOwner: site.internalOwner,
     nextAction: site.nextAction,
     notes: site.notes,
+    workPackages: workPackages.map(stripSiteId),
     comparison: comparison ?? emptyComparison(),
     dnoQuotes,
     idnoTenders,
@@ -849,17 +999,14 @@ export async function getDnoQuotes(filters?: { siteId?: string; supplierId?: str
   const pool = getDbPool();
   const params: unknown[] = [];
   const conditions: string[] = [];
-
   if (filters?.siteId) {
     params.push(filters.siteId);
     conditions.push(`dno_quotes.site_id = $${params.length}`);
   }
-
   if (filters?.supplierId) {
     params.push(filters.supplierId);
     conditions.push(`dno_quotes.supplier_id = $${params.length}`);
   }
-
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const result = await pool.query<DnoQuoteQueryRow>(
@@ -880,8 +1027,8 @@ export async function getDnoQuotes(filters?: { siteId?: string; supplierId?: str
         dno_quotes.delivery_timeframe_days AS "deliveryTimeframeDays",
         dno_quotes.accepted,
         dno_quotes.acceptance_date AS "acceptanceDate",
-        EXTRACT(DAY FROM dno_quotes.quote_received_date - dno_quotes.application_date)::double precision AS "daysToReturn",
-        EXTRACT(DAY FROM dno_quotes.quote_expiry_date - CURRENT_DATE)::double precision AS "daysToExpiry",
+        (dno_quotes.quote_received_date - dno_quotes.application_date)::double precision AS "daysToReturn",
+        (dno_quotes.quote_expiry_date - CURRENT_DATE)::double precision AS "daysToExpiry",
         (dno_quotes.cost_ex_vat - sites.budget)::double precision AS "budgetVariance",
         dno_quotes.notes
       FROM dno_quotes
@@ -920,17 +1067,14 @@ export async function getIdnoTenders(filters?: { siteId?: string; supplierId?: s
   const pool = getDbPool();
   const params: unknown[] = [];
   const conditions: string[] = [];
-
   if (filters?.siteId) {
     params.push(filters.siteId);
     conditions.push(`idno_tenders.site_id = $${params.length}`);
   }
-
   if (filters?.supplierId) {
     params.push(filters.supplierId);
     conditions.push(`idno_tenders.supplier_id = $${params.length}`);
   }
-
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const result = await pool.query<IdnoTenderQueryRow>(
@@ -957,8 +1101,8 @@ export async function getIdnoTenders(filters?: { siteId?: string; supplierId?: s
         idno_tenders.delivery_duration_days AS "deliveryDurationDays",
         idno_tenders.accepted,
         idno_tenders.acceptance_date AS "acceptanceDate",
-        EXTRACT(DAY FROM idno_tenders.tender_return_date - idno_tenders.tender_issue_date)::double precision AS "daysToReturn",
-        EXTRACT(DAY FROM idno_tenders.tender_expiry_date - CURRENT_DATE)::double precision AS "daysToExpiry",
+        (idno_tenders.tender_return_date - idno_tenders.tender_issue_date)::double precision AS "daysToReturn",
+        (idno_tenders.tender_expiry_date - CURRENT_DATE)::double precision AS "daysToExpiry",
         idno_tenders.notes
       FROM idno_tenders
       INNER JOIN sites ON sites.id = idno_tenders.site_id
@@ -997,17 +1141,14 @@ export async function getIcpTenders(filters?: { siteId?: string; supplierId?: st
   const pool = getDbPool();
   const params: unknown[] = [];
   const conditions: string[] = [];
-
   if (filters?.siteId) {
     params.push(filters.siteId);
     conditions.push(`icp_tenders.site_id = $${params.length}`);
   }
-
   if (filters?.supplierId) {
     params.push(filters.supplierId);
     conditions.push(`icp_tenders.supplier_id = $${params.length}`);
   }
-
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const result = await pool.query<IcpTenderQueryRow>(
@@ -1028,8 +1169,8 @@ export async function getIcpTenders(filters?: { siteId?: string; supplierId?: st
         icp_tenders.acceptance_date AS "acceptanceDate",
         icp_tenders.exclusions,
         icp_tenders.delivery_assumptions AS "deliveryAssumptions",
-        EXTRACT(DAY FROM icp_tenders.tender_return_date - icp_tenders.tender_issue_date)::double precision AS "daysToReturn",
-        EXTRACT(DAY FROM icp_tenders.tender_expiry_date - CURRENT_DATE)::double precision AS "daysToExpiry",
+        (icp_tenders.tender_return_date - icp_tenders.tender_issue_date)::double precision AS "daysToReturn",
+        (icp_tenders.tender_expiry_date - CURRENT_DATE)::double precision AS "daysToExpiry",
         icp_tenders.notes
       FROM icp_tenders
       INNER JOIN sites ON sites.id = icp_tenders.site_id
@@ -1075,7 +1216,7 @@ export async function getCommercialComparisonList(): Promise<CommercialCompariso
         site_id,
         MIN((COALESCE(contestable_cost, 0) + COALESCE(non_contestable_cost, 0) - COALESCE(asset_value_payment, 0))::double precision) AS best_idno_net_cost,
         MIN(delivery_duration_days) AS best_idno_duration,
-        MIN(EXTRACT(DAY FROM tender_expiry_date - CURRENT_DATE)::double precision) FILTER (WHERE tender_expiry_date IS NOT NULL AND accepted = FALSE) AS idno_expiry_days
+        MIN((tender_expiry_date - CURRENT_DATE)::double precision) FILTER (WHERE tender_expiry_date IS NOT NULL AND accepted = FALSE) AS idno_expiry_days
       FROM idno_tenders
       GROUP BY site_id
     ),
@@ -1084,7 +1225,7 @@ export async function getCommercialComparisonList(): Promise<CommercialCompariso
         site_id,
         MIN(contestable_works_cost)::double precision AS best_icp_cost,
         MIN(delivery_duration_days) AS best_icp_duration,
-        MIN(EXTRACT(DAY FROM tender_expiry_date - CURRENT_DATE)::double precision) FILTER (WHERE tender_expiry_date IS NOT NULL AND accepted = FALSE) AS icp_expiry_days
+        MIN((tender_expiry_date - CURRENT_DATE)::double precision) FILTER (WHERE tender_expiry_date IS NOT NULL AND accepted = FALSE) AS icp_expiry_days
       FROM icp_tenders
       GROUP BY site_id
     ),
@@ -1092,7 +1233,7 @@ export async function getCommercialComparisonList(): Promise<CommercialCompariso
       SELECT
         site_id,
         MIN(delivery_timeframe_days) AS best_dno_duration,
-        MIN(EXTRACT(DAY FROM quote_expiry_date - CURRENT_DATE)::double precision) FILTER (WHERE quote_expiry_date IS NOT NULL AND accepted = FALSE) AS dno_expiry_days
+        MIN((quote_expiry_date - CURRENT_DATE)::double precision) FILTER (WHERE quote_expiry_date IS NOT NULL AND accepted = FALSE) AS dno_expiry_days
       FROM dno_quotes
       GROUP BY site_id
     )
@@ -1124,21 +1265,24 @@ export async function getCommercialComparisonList(): Promise<CommercialCompariso
   `);
 
   return result.rows.map((row) => {
-    const lowestNetCost = minDefined([row.dnoDirectCost, row.bestIdnoNetCost, row.bestIcpCost]);
-    const recommendedRoute = pickRecommendedRoute(row.dnoDirectCost, row.bestIdnoNetCost, row.bestIcpCost);
+    const dnoDirectCost = toNullableNumber(row.dnoDirectCost);
+    const bestIdnoNetCost = toNullableNumber(row.bestIdnoNetCost);
+    const bestIcpCost = toNullableNumber(row.bestIcpCost);
+    const lowestNetCost = minDefined([dnoDirectCost, bestIdnoNetCost, bestIcpCost]);
+    const budget = toNullableNumber(row.budget);
 
     return {
       siteId: row.siteId,
       siteName: row.siteName,
       customerName: row.customerName,
-      budget: toNullableNumber(row.budget),
-      dnoDirectCost: toNullableNumber(row.dnoDirectCost),
-      bestIdnoNetCost: toNullableNumber(row.bestIdnoNetCost),
-      bestIcpCost: toNullableNumber(row.bestIcpCost),
+      budget,
+      dnoDirectCost,
+      bestIdnoNetCost,
+      bestIcpCost,
       lowestNetCost,
       fastestRouteDays: row.fastestRouteDays === 999999 ? null : toNullableNumber(row.fastestRouteDays),
-      recommendedRoute,
-      budgetVariance: lowestNetCost !== null && row.budget !== null ? lowestNetCost - row.budget : null,
+      recommendedRoute: pickRecommendedRoute(dnoDirectCost, bestIdnoNetCost, bestIcpCost),
+      budgetVariance: lowestNetCost !== null && budget !== null ? lowestNetCost - budget : null,
       expiryPressure: describeExpiryPressure(row.earliestExpiryDays)
     };
   });
@@ -1158,7 +1302,20 @@ function mapSiteListRow(row: SiteListRow): SiteListItem {
     idnoTenderStatus: row.idnoTenderStatus,
     icpTenderStatus: row.icpTenderStatus,
     nextAction: row.nextAction,
-    internalOwner: row.internalOwner
+    internalOwner: row.internalOwner,
+    workPackages: []
+  };
+}
+
+function stripSiteId(workPackage: SiteWorkPackage & { siteId: string }): SiteWorkPackage {
+  return {
+    id: workPackage.id,
+    packageType: workPackage.packageType,
+    managedByType: workPackage.managedByType,
+    managedBySupplierId: workPackage.managedBySupplierId,
+    managedBySupplierName: workPackage.managedBySupplierName,
+    status: workPackage.status,
+    notes: workPackage.notes
   };
 }
 
@@ -1191,31 +1348,16 @@ function pickRecommendedRoute(
     { label: "ICP route", value: bestIcpCost }
   ].filter((candidate): candidate is { label: string; value: number } => candidate.value !== null);
 
-  if (candidates.length === 0) {
-    return "Awaiting offers";
-  }
-
+  if (candidates.length === 0) return "Awaiting offers";
   const best = candidates.reduce((current, candidate) => (candidate.value < current.value ? candidate : current));
   return best.label;
 }
 
 function describeExpiryPressure(days: number | null): string {
-  if (days === null || days === 999999) {
-    return "No live expiry";
-  }
-
-  if (days < 0) {
-    return "Expired";
-  }
-
-  if (days <= 7) {
-    return "Urgent";
-  }
-
-  if (days <= 14) {
-    return "Watch closely";
-  }
-
+  if (days === null || days === 999999) return "No live expiry";
+  if (days < 0) return "Expired";
+  if (days <= 7) return "Urgent";
+  if (days <= 14) return "Watch closely";
   return "Comfortable";
 }
 
@@ -1224,9 +1366,6 @@ function toIso(value: Date | null): string | null {
 }
 
 function toNullableNumber(value: number | string | null | undefined): number | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
+  if (value === null || value === undefined) return null;
   return typeof value === "number" ? value : Number(value);
 }

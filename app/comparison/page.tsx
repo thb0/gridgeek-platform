@@ -2,11 +2,12 @@ import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCurrency, formatDays } from "@/lib/format";
-import { getCommercialComparisonList } from "@/lib/platform-data";
+import { getCommercialComparisonList, requireOrganizationSetup } from "@/lib/platform-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function ComparisonPage() {
+  await requireOrganizationSetup();
   const comparisons = await getCommercialComparisonList().catch(() => null);
 
   if (!comparisons) {

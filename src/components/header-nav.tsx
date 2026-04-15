@@ -9,7 +9,8 @@ const navLinks = [
   { href: "/quotes/dno", label: "DNO Quotes" },
   { href: "/tenders/idno", label: "IDNO Tenders" },
   { href: "/tenders/icp", label: "ICP Tenders" },
-  { href: "/comparison", label: "Comparison" }
+  { href: "/comparison", label: "Comparison" },
+  { href: "/settings/company", label: "Settings" }
 ];
 
 export function HeaderNav() {

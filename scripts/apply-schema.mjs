@@ -9,11 +9,30 @@ const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const schemaDir = path.resolve(__dirname, "../db/schema");
-const databaseUrl = process.env.DATABASE_URL;
 
-if (!databaseUrl) {
-  console.error("DATABASE_URL is not set.");
-  process.exit(1);
+function resolveDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    console.error("DATABASE_URL is not set.");
+    process.exit(1);
+  }
+
+  if (process.env.RUNNING_IN_DOCKER === "true") {
+    return databaseUrl;
+  }
+
+  const fallbackHost = process.env.DATABASE_HOST_FALLBACK ?? "127.0.0.1";
+
+  try {
+    const resolvedUrl = new URL(databaseUrl);
+    if (resolvedUrl.hostname === "db") {
+      resolvedUrl.hostname = fallbackHost;
+    }
+    return resolvedUrl.toString();
+  } catch {
+    return databaseUrl;
+  }
 }
 
 async function applySchema() {
@@ -26,7 +45,7 @@ async function applySchema() {
     return;
   }
 
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool({ connectionString: resolveDatabaseUrl() });
   const client = await pool.connect();
 
   try {

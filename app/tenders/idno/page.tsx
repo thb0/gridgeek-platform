@@ -2,11 +2,12 @@ import Link from "next/link";
 import { DataState } from "@/components/data-state";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCurrency, formatDate, formatDays } from "@/lib/format";
-import { getIdnoTenders } from "@/lib/platform-data";
+import { getIdnoTenders, requireOrganizationSetup } from "@/lib/platform-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function IdnoTendersPage() {
+  await requireOrganizationSetup();
   const tenders = await getIdnoTenders().catch(() => null);
 
   if (!tenders) {

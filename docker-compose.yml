@@ -28,6 +28,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
       HOSTNAME: 0.0.0.0
+      RUNNING_IN_DOCKER: "true"
       NEXT_TELEMETRY_DISABLED: "1"
       DATABASE_URL: ${DATABASE_URL:-postgresql://gridgeek:change-me@db:5432/gridgeek}
     ports:
