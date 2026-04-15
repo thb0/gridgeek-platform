@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:apply": "node scripts/apply-schema.mjs"
+    "db:apply": "node scripts/apply-schema.mjs",
+    "db:seed": "node scripts/seed-demo-data.mjs"
   },
   "dependencies": {
     "bootstrap": "5.3.3",

@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+PROJECT_DIR="/mnt/user/appdata/gridgeek/app/gridgeek-platform"
+
+echo "[$(date)] Starting GridGeek update..."
+cd "$PROJECT_DIR"
+
+echo "[$(date)] Pulling latest code..."
+git pull
+
+echo "[$(date)] Rebuilding containers..."
+docker compose up -d --build
+
+echo "[$(date)] Current container status:"
+docker compose ps
+
+echo "[$(date)] Health check:"
+curl -s http://192.168.1.250:3000/api/health || true
+
+echo
+echo "[$(date)] Update complete."

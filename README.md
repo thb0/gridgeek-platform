@@ -1,14 +1,18 @@
 # GridGeek Platform
 
-GridGeek Platform is a lean, self-hosted-first scaffold for running customer/supplier/site and tender workflows on Docker-friendly infrastructure (including Unraid).
+GridGeek Platform is a lean, self-hosted-first connections commercial tracker for customer, site, supplier, DNO quote, IDNO tender, and ICP tender workflows on Docker-friendly infrastructure (including Unraid).
 
 ## Current project status
 
 This is the **next lean milestone** of the scaffold. It now includes:
 
-- Next.js app shell with shared navigation and placeholder module pages
+- Next.js app shell with shared navigation and site-centric tracker pages
 - PostgreSQL-backed foundation with starter schema SQL
 - Lightweight DB tooling using `pg` + plain SQL files
+- Server-rendered dashboard and module list pages backed by PostgreSQL
+- Site detail pages with related DNO / IDNO / ICP sections
+- Commercial comparison page for route review
+- Demo seed script for fresh self-hosted installs
 - Docker Compose setup for app + persistent Postgres
 - Unraid-friendly update script (`update.sh`)
 
@@ -18,6 +22,11 @@ This is the **next lean milestone** of the scaffold. It now includes:
 - Health endpoint: `/api/health` with DB check + DB server time probe
 - PostgreSQL connection utility
 - Starter schema apply command (`npm run db:apply`)
+- Demo data seed command (`npm run db:seed`)
+- Live dashboard metrics for active sites, commercial pressure, and average return/value signals
+- Live customers, suppliers, and sites tables
+- Customer, supplier, and site detail pages
+- DNO quote, IDNO tender, ICP tender, and commercial comparison tables
 - Docker build/run flow
 - Persistent Postgres volume (`postgres_data`)
 
@@ -63,13 +72,19 @@ For this phase, **`pg` + versioned SQL files** is a practical and popular choice
    npm run db:apply
    ```
 
-5. Run app:
+5. Seed demo data:
+
+   ```bash
+   npm run db:seed
+   ```
+
+6. Run app:
 
    ```bash
    npm run dev
    ```
 
-6. Open http://localhost:3000
+7. Open http://localhost:3000
 
 ## Run with Docker Compose
 
@@ -91,7 +106,13 @@ For this phase, **`pg` + versioned SQL files** is a practical and popular choice
    npm run db:apply
    ```
 
-4. Check status:
+4. Seed demo data:
+
+   ```bash
+   npm run db:seed
+   ```
+
+5. Check status:
 
    ```bash
    docker compose ps
@@ -126,18 +147,25 @@ This preserves data across container restarts/rebuilds unless you explicitly rem
 
 - `/` - Home
 - `/login` - Login placeholder
-- `/dashboard` - Dashboard placeholder
-- `/customers` - Customers placeholder
-- `/suppliers` - Suppliers placeholder
-- `/sites` - Sites placeholder
-- `/quotes/dno` - DNO quotes placeholder
-- `/tenders/idno` - IDNO tenders placeholder
-- `/tenders/icp` - ICP tenders placeholder
+- `/dashboard` - Dashboard with commercial KPIs
+- `/customers` - Live customer list
+- `/customers/[id]` - Customer detail
+- `/suppliers` - Live supplier list
+- `/suppliers/[id]` - Supplier detail
+- `/sites` - Live site list
+- `/sites/[id]` - Site detail hub
+- `/quotes/dno` - DNO quotes table
+- `/tenders/idno` - IDNO tenders table
+- `/tenders/icp` - ICP tenders table
+- `/comparison` - Commercial comparison table
 - `/api/health` - Service + DB health JSON
 
-## Starter schema (current)
+## Data model
 
-Schema file: `db/schema/001_initial.sql`
+Schema files:
+
+- `db/schema/001_initial.sql`
+- `db/schema/002_site_centric_commercial_tracker.sql`
 
 Core tables:
 
@@ -147,6 +175,21 @@ Core tables:
 - `customers`
 - `suppliers`
 - `sites`
+- `dno_quotes`
+- `idno_tenders`
+- `icp_tenders`
+
+Key design choices:
+
+- `sites` are the parent operational record
+- one supplier table serves DNO / IDNO / ICP / Other via `supplier_type`
+- commercial records stay in separate tables because their cost logic differs
+- IDNO net cost is calculated as contestable + non-contestable - asset value
+
+Seed workflow:
+
+- `npm run db:apply`
+- `npm run db:seed`
 
 Common fields included where appropriate:
 
@@ -157,18 +200,30 @@ Common fields included where appropriate:
 - `created_at`
 - `updated_at` (maintained by trigger)
 
-## Roadmap (short)
+## MVP build order
 
-- Auth (lean self-hosted baseline)
-- Roles/permissions refinement
-- Customers module depth
-- Suppliers module depth
-- Sites module depth
-- DNO quote workflow
-- IDNO tender workflow
-- ICP tender workflow
-- Estimator module
-- Optional billing integration later
+Phase 1:
+
+- Customer
+- Supplier
+- Site
+- DNO Quote
+- IDNO Tender
+- ICP Tender
+
+Phase 2:
+
+- Dashboard refinement
+- Site detail working page
+- Commercial comparison logic
+
+Phase 3:
+
+- Documents
+- Contacts
+- Timeline / activity log
+- Quote expiry alerts
+- Reporting
 
 ## Notes
 

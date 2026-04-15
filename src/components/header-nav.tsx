@@ -2,14 +2,14 @@ import Link from "next/link";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/login", label: "Login" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/customers", label: "Customers" },
   { href: "/suppliers", label: "Suppliers" },
   { href: "/sites", label: "Sites" },
   { href: "/quotes/dno", label: "DNO Quotes" },
   { href: "/tenders/idno", label: "IDNO Tenders" },
-  { href: "/tenders/icp", label: "ICP Tenders" }
+  { href: "/tenders/icp", label: "ICP Tenders" },
+  { href: "/comparison", label: "Comparison" }
 ];
 
 export function HeaderNav() {
