@@ -38,6 +38,12 @@ This is the **next lean milestone** of the scaffold. It now includes:
 - `pg` (node-postgres)
 - Docker / Docker Compose
 
+Current framework baseline:
+
+- Next.js 16
+- React 19
+- ESLint CLI with flat config (`eslint.config.mjs`)
+
 ### Why this DB tooling?
 
 For this phase, **`pg` + versioned SQL files** is a practical and popular choice:

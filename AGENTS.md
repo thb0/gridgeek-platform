@@ -16,6 +16,8 @@ GridGeek Platform is a lean, self-hosted connections commercial tracker designed
 - One shared supplier register with supplier type used to distinguish DNO / IDNO / ICP / Other
 - Separate commercial tables for `dno_quotes`, `idno_tenders`, and `icp_tenders`
 - Docker builds should stay lean via `.dockerignore`, deterministic installs, and a simple container healthcheck against `/api/health`
+- Keep the Next.js toolchain on a current patched release to avoid stale-framework security issues
+- On Next.js 16+, use the ESLint CLI with `eslint.config.mjs` instead of `next lint`
 
 ## Maintenance rules
 - Keep this file up to date when architecture, stack, or repo workflows change.
