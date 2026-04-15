@@ -15,6 +15,7 @@ GridGeek Platform is a lean, self-hosted connections commercial tracker designed
 - Site-centric commercial data model where quotes and tenders hang off the site record
 - One shared supplier register with supplier type used to distinguish DNO / IDNO / ICP / Other
 - Separate commercial tables for `dno_quotes`, `idno_tenders`, and `icp_tenders`
+- Docker builds should stay lean via `.dockerignore`, deterministic installs, and a simple container healthcheck against `/api/health`
 
 ## Maintenance rules
 - Keep this file up to date when architecture, stack, or repo workflows change.

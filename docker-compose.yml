@@ -27,6 +27,8 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
+      HOSTNAME: 0.0.0.0
+      NEXT_TELEMETRY_DISABLED: "1"
       DATABASE_URL: ${DATABASE_URL:-postgresql://gridgeek:change-me@db:5432/gridgeek}
     ports:
       - "3000:3000"
@@ -34,6 +36,7 @@ services:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 3s
+      start_period: 30s
       retries: 3
 
 volumes:

@@ -1,0 +1,12 @@
+.git
+.gitignore
+.next
+node_modules
+node_modules_stale_*
+npm-debug.log*
+package-lock.json.tmp
+gridgeek-platform.code-workspace
+update.sh.local-backup
+Dockerfile*
+README.md
+docs
